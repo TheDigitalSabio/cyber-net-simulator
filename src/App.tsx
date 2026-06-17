@@ -29,7 +29,7 @@ interface DigitalAsset {
   shortDesc: string;
   fullScope: string[];
   features: string[];
-  previewPlaceholderText: string; // This can later be replaced with an <img src="..." /> tag
+  imageSrc: string; // 👈 Make sure this says 'imageSrc: string;' and NOT 'previewPlaceholderText'
   storeUrl: string;
 }
 
@@ -59,7 +59,7 @@ export const App: React.FC = () => {
   const draggingNodeId = useRef<string | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  // --- STATIC ASSET DATA MAP ---
+ // --- STATIC ASSET DATA MAP ---
   const digitalAssets: DigitalAsset[] = [
     {
       id: 'ai-hub',
@@ -73,8 +73,8 @@ export const App: React.FC = () => {
         'Maps custom generative AI pipelines to existing technical department workflows.'
       ],
       features: ['Prompt Matrix Repository', 'Model Parameter Logs', 'Pipeline Deployment Mapping', 'Token & Cost Tracking Logs'],
-      previewPlaceholderText: '[📊 AI_OPERATIONS_HUB_DASHBOARD_PREVIEW.JPG]',
-      storeUrl: 'https://cyber-net-simulator.vercel.app' // Replace with Gumroad/Payhip link later
+      imageSrc: '/ai-hub.jpg', // 👈 Points directly to public/ai-hub.jpg
+      storeUrl: 'https://cyber-net-simulator.vercel.app' 
     },
     {
       id: 'sop-library',
@@ -88,8 +88,8 @@ export const App: React.FC = () => {
         'Minimizes organizational friction during software development and infrastructure scaling phases.'
       ],
       features: ['Interactive Step Verification', 'Role-Based Access Mapping', 'Audit Lifecycle Tracking', 'System Dependency Linking'],
-      previewPlaceholderText: '[📚 MASTER_SOP_WORKSPACE_PREVIEW.JPG]',
-      storeUrl: 'https://cyber-net-simulator.vercel.app' // Replace with Gumroad/Payhip link later
+      imageSrc: '/sop-library.jpg', // 👈 Points directly to public/sop-library.jpg
+      storeUrl: 'https://cyber-net-simulator.vercel.app' 
     },
     {
       id: 'saas-tracker',
@@ -103,8 +103,8 @@ export const App: React.FC = () => {
         'Optimizes operational budgets by automatically mapping underutilized software licenses.'
       ],
       features: ['Licensing & Renewal Alarms', 'Functional Redundancy Auditing', 'API Endpoint Matrix Map', 'Cost Optimization Dashboard'],
-      previewPlaceholderText: '[🛡️ SAAS_TECH_STACK_AUDITOR_PREVIEW.JPG]',
-      storeUrl: 'https://cyber-net-simulator.vercel.app' // Replace with Gumroad/Payhip link later
+      imageSrc: '/saas-tracker.jpg', // 👈 Points directly to public/saas-tracker.jpg
+      storeUrl: 'https://cyber-net-simulator.vercel.app' 
     }
   ];
 
@@ -386,16 +386,21 @@ export const App: React.FC = () => {
                 </div>
 
                 <div style={styles.modalBodyLayout}>
-                  {/* LEFT COLUMN: CRISP TERMINAL IMAGE PLACEHOLDER FOR NOTION PREVIEWS */}
-                  <div style={styles.modalImageContainer}>
-                    <div style={{ color: selectedAsset.badgeColor, fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '8px' }}>
-                      {selectedAsset.previewPlaceholderText}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#555577', textAlign: 'center', maxWidth: '80%' }}>
-                      (In production, swap this terminal wireframe component with a direct production screenshot of your Notion dashboard interface)
-                    </div>
-                  </div>
-
+                  {/* AFTER */}
+                {/* LEFT COLUMN: CRISP IMAGE PREVIEW FOR NOTION INTERFACES */}
+                <div style={styles.modalImageContainer}>
+                  <img 
+                    src={selectedAsset.imageSrc} 
+                    alt={selectedAsset.title} 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover', 
+                      borderRadius: '4px',
+                      border: '1px solid #222235'
+                    }} 
+                  />
+                </div>
                   {/* RIGHT COLUMN: HIGH-VALUE FUNCTIONAL SPECIFICATION MATRIX */}
                   <div style={styles.modalSpecsContainer}>
                     <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '0.9rem', letterSpacing: '1px' }}>SYSTEM OPERATIONAL SCOPE</h4>
