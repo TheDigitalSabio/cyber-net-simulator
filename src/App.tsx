@@ -164,13 +164,74 @@ export const App: React.FC = () => {
     logToTerminal("🗑️ [STORAGE] Local memory maps wiped clean.");
   };
 
+  // --- SAVE/LOAD TOPOLOGIES: FILE ENGINE HANDLERS ---
+  const exportTopologyToJSON = () => {
+    if (nodes.length === 0 && cables.length === 0) {
+      logToTerminal("❌ EXPORT_ERROR: Cannot map an empty infrastructure topology matrix.");
+      return;
+    }
+    
+    const topologyPackage = {
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      nodes,
+      cables
+    };
+
+    const dataStream = "data:text/json;charset=utf-8," + encodeURIComponent(
+      JSON.stringify(topologyPackage, null, 2)
+    );
+    
+    const downloadHook = document.createElement('a');
+    downloadHook.setAttribute("href", dataStream);
+    downloadHook.setAttribute("download", `net_matrix_${Math.random().toString(36).substring(2, 7)}.json`);
+    document.body.appendChild(downloadHook);
+    downloadHook.click();
+    downloadHook.remove();
+    
+    logToTerminal("💾 [SYSTEM_EXPORT] Core infrastructure layouts successfully compiled to JSON filesystem.");
+  };
+
+  const importTopologyFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const fileTarget = event.target.files?.[0];
+    if (!fileTarget) return;
+
+    const streamReader = new FileReader();
+    streamReader.onload = (e) => {
+      try {
+        const structuralMap = JSON.parse(e.target?.result as string);
+        
+        if (Array.isArray(structuralMap.nodes) && Array.isArray(structuralMap.cables)) {
+          setNodes(structuralMap.nodes);
+          setCables(structuralMap.cables);
+          setSimulationPath([]);
+          setSelectedNodeId(null);
+          logToTerminal(`🛸 [SYSTEM_IMPORT] External layout map "${fileTarget.name}" injected successfully into grid arrays.`);
+        } else {
+          logToTerminal("❌ IMPORT_CRITICAL: Structured arrays do not match current Net_Matrix telemetry guidelines.");
+        }
+      } catch (err) {
+        logToTerminal("❌ IMPORT_CRITICAL: Failed to compile JSON syntax tree. File corrupted.");
+      }
+    };
+    
+    streamReader.readAsText(fileTarget);
+    event.target.value = '';
+  };
+
+  // --- ACTIVE FIREWALLS: INTERACTIVE TOGGLE HANDLER ---
+  const handleToggleFirewallRule = () => {
+    setFirewallBypassActive(prev => !prev);
+    logToTerminal(`🛡️ [FIREWALL_RULE_CHANGED] Global protection matrix toggled. Re-evaluating shield grids.`);
+  };
+
   const handleMouseDown = (e: React.MouseEvent, node: NetworkNode) => {
     if (linkModeSourceId) {
       handleLinkTarget(node.id);
       return;
     }
     draggingNodeId.current = node.id;
-    setSelectedNodeId(node.id); // FEATURE 1: Focus node configuration drawer on click
+    setSelectedNodeId(node.id); // Focus node configuration drawer on click
     
     const rect = e.currentTarget.getBoundingClientRect();
     dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -297,7 +358,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // --- FEATURE 1: MUTATION HANDLERS FOR INDIVIDUAL HARDWARE NODE IN DRAWER ---
   const handleUpdateNodeField = (id: string, field: 'label' | 'ipAddress', value: string) => {
     setNodes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
   };
@@ -363,9 +423,19 @@ export const App: React.FC = () => {
           <button style={{ ...styles.linkButton, marginRight: '12px', backgroundColor: linkModeSourceId ? '#00ffcc' : '#1a1a24', color: linkModeSourceId ? '#000' : '#00ffcc' }} onClick={initiateLink}>
             {linkModeSourceId ? "SELECT TARGET NODE..." : "⚡ LINK HARDWARE"}
           </button>
+          
+          {/* FILE ACTIONS BUTTON CORES */}
+          <label style={{ ...styles.linkButton, marginRight: '12px', borderColor: '#ffff00', color: '#ffff00', display: 'inline-block', cursor: 'pointer' }}>
+            📥 IMPORT MAP
+            <input type="file" accept=".json" onChange={importTopologyFromJSON} style={{ display: 'none' }} />
+          </label>
+          <button style={{ ...styles.linkButton, marginRight: '12px', borderColor: '#00ffcc', color: '#00ffcc' }} onClick={exportTopologyToJSON}>
+            💾 EXPORT MAP
+          </button>
           <button style={{ ...styles.linkButton, marginRight: '12px', borderColor: '#ff0055', color: '#ff0055' }} onClick={clearTopologyMap}>
             🗑️ PURGE STORAGE
           </button>
+
           <button style={styles.runButton} onClick={runRoutingDiagnostic} disabled={isSimulating}>
             {isSimulating ? "TRANSMITTING..." : "RUN_DIAGNOSTIC.EXE"}
           </button>
@@ -505,7 +575,9 @@ export const App: React.FC = () => {
         {activeFocusedNode && (
           <aside style={styles.sidebarRight}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ ...styles.panelTitle, color: '#ffffff' }}>CORE_CONFIG // HUD</h3>
+              <h3 style={{ ...styles.panelTitle, color: activeFocusedNode.type === 'FIREWALL' ? '#ffff00' : '#ffffff' }}>
+                {activeFocusedNode.type === 'FIREWALL' ? 'SEC_PERIMETER // HUD' : 'CORE_CONFIG // HUD'}
+              </h3>
               <button style={styles.closeDrawerBtn} onClick={() => setSelectedNodeId(null)}>✕</button>
             </div>
             
@@ -518,6 +590,30 @@ export const App: React.FC = () => {
               <label style={styles.drawerLabel}>LOCAL IP VECTOR ADDRESS</label>
               <input type="text" className="drawer-input" value={activeFocusedNode.ipAddress} onChange={(e) => handleUpdateNodeField(activeFocusedNode.id, 'ipAddress', e.target.value)} />
             </div>
+
+            {/* CONDITIONAL SECURITY RULES ENVELOPE FOR FIREWALL CORES */}
+            {activeFocusedNode.type === 'FIREWALL' && (
+              <div style={{ ...styles.drawerTelemetryCard, borderColor: '#ffff00' }}>
+                <div style={{ ...styles.drawerLabel, color: '#ffff00' }}>FIREWALL INTERCEPT LAYER</div>
+                <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>
+                  Status: <span style={{ color: firewallBypassActive ? '#ff0055' : '#00ffcc', fontWeight: 'bold' }}>
+                    {firewallBypassActive ? "⚠️ BYPASSED (INACTIVE)" : "🔒 ACTIVE PROTECTION SHIELD"}
+                  </span>
+                </div>
+                <button 
+                  style={{ 
+                    ...styles.drawerResetBtn, 
+                    background: firewallBypassActive ? '#00ffcc22' : '#ff005522', 
+                    borderColor: firewallBypassActive ? '#00ffcc' : '#ff0055', 
+                    color: firewallBypassActive ? '#00ffcc' : '#ff0055',
+                    marginTop: '12px'
+                  }} 
+                  onClick={handleToggleFirewallRule}
+                >
+                  {firewallBypassActive ? "ENGAGE SECURITY PERIMETER" : "DISABLE SECURITY SHIELD"}
+                </button>
+              </div>
+            )}
 
             <div style={styles.drawerTelemetryCard}>
               <div style={styles.drawerLabel}>HARDWARE TRAFFIC STATISTICS</div>
