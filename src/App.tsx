@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 type NodeType = 'WORKSTATION' | 'ROUTER' | 'SERVER' | 'FIREWALL' | 'MALICIOUS';
+type ViewMode = 'PORTFOLIO' | 'SIMULATOR';
 
 interface NetworkNode {
   id: string;
@@ -20,16 +21,17 @@ interface NetworkCable {
 }
 
 export const App: React.FC = () => {
+  // --- VIEW CONFIGURATION STATE ---
+  const [viewMode, setViewMode] = useState<ViewMode>('PORTFOLIO');
+
+  // --- CORE SIMULATOR STATE MAPS ---
   const [nodes, setNodes] = useState<NetworkNode[]>([]);
   const [cables, setCables] = useState<NetworkCable[]>([]);
   const [linkModeSourceId, setLinkModeSourceId] = useState<string | null>(null);
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  
-  // --- STATE SECTORS: INTERACTIVE CONFIG & FIREWALL SECURITY ---
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [firewallBypassActive, setFirewallBypassActive] = useState<boolean>(false);
 
-  // --- ADVANCED PATH SIMULATION STATE ---
+  // --- PATH DIAGNOSTIC STATE ---
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [simulationPath, setSimulationPath] = useState<NetworkCable[]>([]);
   const [currentPathIndex, setCurrentPathIndex] = useState<number>(0);
@@ -37,14 +39,13 @@ export const App: React.FC = () => {
 
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
     "NET_MATRIX MATRIX ENGINE READY // HARDWARE, LINK, AND SECURITY ENGINES ONLINE.",
-    "STORAGE ENGINE: Automatic LocalStorage topology mapping enabled.",
-    "DEPLOYMENT METHOD: Route packets from a WORKSTATION to a SERVER core. Beware of Security Firewalls and Malicious sectors!"
+    "STORAGE ENGINE: Automatic LocalStorage topology mapping enabled."
   ]);
 
   const draggingNodeId = useRef<string | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  // --- FEATURE 3: LOCAL STORAGE INITIAL LOAD ---
+  // Load saved layouts
   useEffect(() => {
     const savedNodes = localStorage.getItem('NET_MATRIX_NODES');
     const savedCables = localStorage.getItem('NET_MATRIX_CABLES');
@@ -52,7 +53,7 @@ export const App: React.FC = () => {
     if (savedCables) setCables(JSON.parse(savedCables));
   }, []);
 
-  // --- FEATURE 3: LOCAL STORAGE PERSISTENCE SYNC ---
+  // Sync saved layouts
   useEffect(() => {
     if (nodes.length > 0 || cables.length > 0) {
       localStorage.setItem('NET_MATRIX_NODES', JSON.stringify(nodes));
@@ -60,7 +61,7 @@ export const App: React.FC = () => {
     }
   }, [nodes, cables]);
 
-  // --- MULTI-HOP SEQUENTIAL STEP ENGINE ---
+  // Sequential Step Engine Loop
   useEffect(() => {
     if (!isSimulating || simulationPath.length === 0) return;
 
@@ -69,17 +70,14 @@ export const App: React.FC = () => {
         if (prev >= 1) {
           const currentCable = simulationPath[currentPathIndex];
           
-          // Identify the node the packet is arriving at on this leg
-          const activeCableHop = simulationPath[currentPathIndex];
           let lastEntryId = nodes.find(n => n.type === 'WORKSTATION')?.id || '';
           if (currentPathIndex > 0) {
             const prevCable = simulationPath[currentPathIndex - 1];
-            lastEntryId = (prevCable.fromId === activeCableHop.fromId || prevCable.fromId === activeCableHop.toId) ? prevCable.toId : prevCable.fromId;
+            lastEntryId = (prevCable.fromId === currentCable.fromId || prevCable.fromId === currentCable.toId) ? prevCable.toId : prevCable.fromId;
           }
           const destinationNodeId = currentCable.fromId === lastEntryId ? currentCable.toId : currentCable.fromId;
           const arrivalNode = nodes.find(n => n.id === destinationNodeId);
 
-          // FEATURE 2: SECURITY ENGINE - FIREWALL INTERCEPT
           if (arrivalNode?.type === 'FIREWALL' && !firewallBypassActive) {
             clearInterval(interval);
             setIsSimulating(false);
@@ -88,32 +86,23 @@ export const App: React.FC = () => {
             return 0;
           }
 
-          // FEATURE 2: SECURITY ENGINE - MALICIOUS SECTOR BREACH
           if (arrivalNode?.type === 'MALICIOUS') {
-            logToTerminal(`⚠️ [MALICIOUS BREACH] Packet corrupted passing through compromised core ${arrivalNode.label}! Telemetry payload altered.`);
+            logToTerminal(`⚠️ [MALICIOUS BREACH] Packet corrupted passing through compromised core ${arrivalNode.label}!`);
           }
 
-          // Update data telemetry counters
           setNodes(prevNodes => 
-            prevNodes.map(n => {
-              if (n.id === currentCable.fromId || n.id === currentCable.toId) {
-                return { ...n, txCount: n.txCount + 1, rxCount: n.rxCount + 1 };
-              }
-              return n;
-            })
+            prevNodes.map(n => (n.id === currentCable.fromId || n.id === currentCable.toId) ? { ...n, txCount: n.txCount + 1, rxCount: n.rxCount + 1 } : n)
           );
 
-          // Check if there are more hops left in the sequence route
           if (currentPathIndex < simulationPath.length - 1) {
-            const nextIndex = currentPathIndex + 1;
-            setCurrentPathIndex(nextIndex);
-            logToTerminal(`📡 [HOP RELAY] Reached transit node. Forwarding packet to segment ${nextIndex + 1}/${simulationPath.length}...`);
+            setCurrentPathIndex(prevIndex => prevIndex + 1);
+            logToTerminal(`📡 [HOP RELAY] Forwarding packet to segment ${currentPathIndex + 2}/${simulationPath.length}...`);
             return 0;
           } else {
             clearInterval(interval);
             setIsSimulating(false);
             setSimulationPath([]);
-            logToTerminal("🏁 [SIM COMPLETE] Quantum packet arrived successfully at data core destination. Handshake verified.");
+            logToTerminal("🏁 [SIM COMPLETE] Quantum packet arrived successfully at data core destination.");
             return 0;
           }
         }
@@ -132,204 +121,67 @@ export const App: React.FC = () => {
   const spawnNode = (type: NodeType) => {
     const id = `node_${Math.random().toString(36).substring(2, 9)}`;
     const count = nodes.filter(n => n.type === type).length + 1;
-    
     let defaultIp = `192.168.1.${10 + count}`;
     if (type === 'ROUTER') defaultIp = `10.0.0.${count}`;
     if (type === 'SERVER') defaultIp = `10.0.200.${count}`;
     if (type === 'FIREWALL') defaultIp = `192.168.1.254`;
     if (type === 'MALICIOUS') defaultIp = `66.66.66.${count}`;
 
-    const newNode: NetworkNode = {
-      id,
-      type,
-      label: `${type}_${count}`,
-      ipAddress: defaultIp,
-      gridX: 120,
-      gridY: 120,
-      txCount: 0,
-      rxCount: 0
-    };
-
+    const newNode: NetworkNode = { id, type, label: `${type}_${count}`, ipAddress: defaultIp, gridX: 120, gridY: 120, txCount: 0, rxCount: 0 };
     setNodes([...nodes, newNode]);
-    logToTerminal(`[DEPLOY] ${newNode.label} (${newNode.ipAddress}) deployed to grid sector.`);
+    logToTerminal(`[DEPLOY] ${newNode.label} deployed to grid.`);
   };
 
   const clearTopologyMap = () => {
-    setNodes([]);
-    setCables([]);
-    setSimulationPath([]);
-    setSelectedNodeId(null);
-    localStorage.removeItem('NET_MATRIX_NODES');
-    localStorage.removeItem('NET_MATRIX_CABLES');
+    setNodes([]); setCables([]); setSimulationPath([]); setSelectedNodeId(null);
+    localStorage.removeItem('NET_MATRIX_NODES'); localStorage.removeItem('NET_MATRIX_CABLES');
     logToTerminal("🗑️ [STORAGE] Local memory maps wiped clean.");
   };
 
-  // --- SAVE/LOAD TOPOLOGIES: FILE ENGINE HANDLERS ---
   const exportTopologyToJSON = () => {
-    if (nodes.length === 0 && cables.length === 0) {
-      logToTerminal("❌ EXPORT_ERROR: Cannot map an empty infrastructure topology matrix.");
-      return;
-    }
-    
-    const topologyPackage = {
-      version: "1.0.0",
-      timestamp: new Date().toISOString(),
-      nodes,
-      cables
-    };
-
-    const dataStream = "data:text/json;charset=utf-8," + encodeURIComponent(
-      JSON.stringify(topologyPackage, null, 2)
-    );
-    
+    if (nodes.length === 0 && cables.length === 0) return;
+    const dataStream = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ version: "1.0.0", nodes, cables }, null, 2));
     const downloadHook = document.createElement('a');
     downloadHook.setAttribute("href", dataStream);
-    downloadHook.setAttribute("download", `net_matrix_${Math.random().toString(36).substring(2, 7)}.json`);
-    document.body.appendChild(downloadHook);
-    downloadHook.click();
-    downloadHook.remove();
-    
-    logToTerminal("💾 [SYSTEM_EXPORT] Core infrastructure layouts successfully compiled to JSON filesystem.");
+    downloadHook.setAttribute("download", `the_digital_sabio_topology.json`);
+    document.body.appendChild(downloadHook); downloadHook.click(); downloadHook.remove();
   };
 
   const importTopologyFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileTarget = event.target.files?.[0];
     if (!fileTarget) return;
-
     const streamReader = new FileReader();
     streamReader.onload = (e) => {
       try {
         const structuralMap = JSON.parse(e.target?.result as string);
-        
         if (Array.isArray(structuralMap.nodes) && Array.isArray(structuralMap.cables)) {
-          setNodes(structuralMap.nodes);
-          setCables(structuralMap.cables);
-          setSimulationPath([]);
-          setSelectedNodeId(null);
-          logToTerminal(`🛸 [SYSTEM_IMPORT] External layout map "${fileTarget.name}" injected successfully into grid arrays.`);
-        } else {
-          logToTerminal("❌ IMPORT_CRITICAL: Structured arrays do not match current Net_Matrix telemetry guidelines.");
+          setNodes(structuralMap.nodes); setCables(structuralMap.cables);
+          logToTerminal(`🛸 [SYSTEM_IMPORT] Topology layout map injected successfully.`);
         }
-      } catch (err) {
-        logToTerminal("❌ IMPORT_CRITICAL: Failed to compile JSON syntax tree. File corrupted.");
-      }
+      } catch (err) { logToTerminal("❌ IMPORT_CRITICAL: Invalid configuration tree."); }
     };
-    
     streamReader.readAsText(fileTarget);
     event.target.value = '';
   };
 
-  // --- ACTIVE FIREWALLS: INTERACTIVE TOGGLE HANDLER ---
-  const handleToggleFirewallRule = () => {
-    setFirewallBypassActive(prev => !prev);
-    logToTerminal(`🛡️ [FIREWALL_RULE_CHANGED] Global protection matrix toggled. Re-evaluating shield grids.`);
-  };
-
-  const handleMouseDown = (e: React.MouseEvent, node: NetworkNode) => {
-    if (linkModeSourceId) {
-      handleLinkTarget(node.id);
-      return;
-    }
-    draggingNodeId.current = node.id;
-    setSelectedNodeId(node.id); // Focus node configuration drawer on click
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!draggingNodeId.current) return;
-    
-    const canvas = e.currentTarget.getBoundingClientRect();
-    let newX = e.clientX - canvas.left - dragOffset.current.x;
-    let newY = e.clientY - canvas.top - dragOffset.current.y;
-
-    setNodes(prevNodes => 
-      prevNodes.map(node => 
-        node.id === draggingNodeId.current ? { ...node, gridX: newX, gridY: newY } : node
-      )
-    );
-  };
-
-  const handleMouseUp = () => {
-    if (draggingNodeId.current) {
-      const finalId = draggingNodeId.current;
-      setNodes(prevNodes =>
-        prevNodes.map(node => node.id === finalId ? { ...node, gridX: Math.round(node.gridX / 20) * 20, gridY: Math.round(node.gridY / 20) * 20 } : node)
-      );
-      draggingNodeId.current = null;
-    }
-  };
-
-  const initiateLink = () => {
-    if (nodes.length < 2) {
-      logToTerminal("❌ LINK_ERROR: Build more terminal infrastructure before initiating link sequences.");
-      return;
-    }
-    setLinkModeSourceId('PENDING');
-    logToTerminal("🔌 LINK_MODE: Select primary data packet vector source...");
-  };
-
-  const handleNodeClick = (node: NetworkNode) => {
-    if (linkModeSourceId === 'PENDING') {
-      setLinkModeSourceId(node.id);
-      logToTerminal(`[LINK SOURCE] ${node.label} selected. Map destination node...`);
-    } else if (linkModeSourceId && linkModeSourceId !== 'PENDING') {
-      handleLinkTarget(node.id);
-    }
-  };
-
-  const handleLinkTarget = (targetId: string) => {
-    if (!linkModeSourceId || linkModeSourceId === 'PENDING') return;
-    if (linkModeSourceId === targetId) {
-      logToTerminal("❌ LINK_ABORTED: Loopback error.");
-      setLinkModeSourceId(null);
-      return;
-    }
-
-    const linkExists = cables.some(c => (c.fromId === linkModeSourceId && c.toId === targetId) || (c.fromId === targetId && c.toId === linkModeSourceId));
-    if (linkExists) {
-      logToTerminal("❌ LINK_ABORTED: Network path vector already exists.");
-      setLinkModeSourceId(null);
-      return;
-    }
-
-    const newCable: NetworkCable = { id: `cable_${Math.random().toString(36).substring(2, 9)}`, fromId: linkModeSourceId, toId: targetId };
-    setCables([...cables, newCable]);
-    logToTerminal(`⚡ [VECTOR SECURED] Physical layer connection mapped successfully.`);
-    setLinkModeSourceId(null);
-  };
-
   const runRoutingDiagnostic = () => {
-    logToTerminal("🚀 SPINNING UP DYNAMIC PATHFINDING MATRIX...");
-    
     const startNode = nodes.find(n => n.type === 'WORKSTATION');
     const endNode = nodes.find(n => n.type === 'SERVER');
-
     if (!startNode || !endNode) {
-      logToTerminal("❌ CRITICAL ANOMALY: Simulation requires at least one WORKSTATION source and one SERVER target core.");
+      logToTerminal("❌ CRITICAL ANOMALY: Simulation requires a WORKSTATION source and a SERVER target core.");
       return;
     }
-
     const queue: string[] = [startNode.id];
     const visited = new Set<string>([startNode.id]);
     const parentMap = new Map<string, { parentId: string; viaCable: NetworkCable }>();
-
     let pathFound = false;
 
     while (queue.length > 0) {
       const currentId = queue.shift()!;
-      
-      if (currentId === endNode.id) {
-        pathFound = true;
-        break;
-      }
-
+      if (currentId === endNode.id) { pathFound = true; break; }
       const activeConnections = cables.filter(c => c.fromId === currentId || c.toId === currentId);
-
       for (const cable of activeConnections) {
         const neighborId = cable.fromId === currentId ? cable.toId : cable.fromId;
-        
         if (!visited.has(neighborId)) {
           visited.add(neighborId);
           parentMap.set(neighborId, { parentId: currentId, viaCable: cable });
@@ -341,333 +193,347 @@ export const App: React.FC = () => {
     if (pathFound) {
       const orderedHops: NetworkCable[] = [];
       let currentStepId = endNode.id;
-
       while (currentStepId !== startNode.id) {
         const edge = parentMap.get(currentStepId)!;
         orderedHops.unshift(edge.viaCable);
         currentStepId = edge.parentId;
       }
-
-      setSimulationPath(orderedHops);
-      setCurrentPathIndex(0);
-      setPacketProgress(0);
-      setIsSimulating(true);
-      logToTerminal(`⚡ ROUTE MAP LOCKED: Found shortest connection layout involving ${orderedHops.length} hardware hops.`);
+      setSimulationPath(orderedHops); setCurrentPathIndex(0); setPacketProgress(0); setIsSimulating(true);
+      logToTerminal(`⚡ ROUTE LOCKED: Path discovered using ${orderedHops.length} structural hardware hops.`);
     } else {
-      logToTerminal("❌ PACKET DROP: Target core matrix unreachable. System topology fragmented.");
+      logToTerminal("❌ PACKET DROP: Destination core network array is currently unreachable.");
     }
-  };
-
-  const handleUpdateNodeField = (id: string, field: 'label' | 'ipAddress', value: string) => {
-    setNodes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
-  };
-
-  const handleResetNodeStats = (id: string) => {
-    setNodes(prev => prev.map(n => n.id === id ? { ...n, txCount: 0, rxCount: 0 } : n));
-    logToTerminal(`⚡ Telemetry cache purged for focused hardware core.`);
   };
 
   const renderHardwareGraphic = (type: NodeType, color: string) => {
     switch (type) {
-      case 'WORKSTATION':
-        return (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
-            <rect x="2" y="3" width="20" height="13" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="16" x2="12" y2="21" />
-          </svg>
-        );
-      case 'ROUTER':
-        return (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
-            <ellipse cx="12" cy="17" rx="9" ry="4" /><path d="M12 2v11" /><path d="M17 5l-5-3-5 3" />
-          </svg>
-        );
-      case 'SERVER':
-        return (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
-            <rect x="2" y="2" width="20" height="6" rx="1" /><rect x="2" y="9" width="20" height="6" rx="1" /><rect x="2" y="16" width="20" height="6" rx="1" />
-          </svg>
-        );
-      case 'FIREWALL':
-        return (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          </svg>
-        );
-      case 'MALICIOUS':
-        return (
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
-        );
+      case 'WORKSTATION': return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><rect x="2" y="3" width="20" height="13" rx="2" /><line x1="12" y1="16" x2="12" y2="21" /><line x1="8" y1="21" x2="16" y2="21" /></svg>;
+      case 'ROUTER': return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><ellipse cx="12" cy="17" rx="9" ry="4" /><path d="M12 2v11" /><path d="M17 5l-5-3-5 3" /></svg>;
+      case 'SERVER': return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><rect x="2" y="2" width="20" height="6" rx="1" /><rect x="2" y="9" width="20" height="6" rx="1" /><rect x="2" y="16" width="20" height="6" rx="1" /></svg>;
+      case 'FIREWALL': return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>;
+      case 'MALICIOUS': return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>;
     }
   };
-
-  const activeFocusedNode = nodes.find(n => n.id === selectedNodeId);
 
   return (
     <div style={styles.dashboardContainer}>
       <style>{`
         @keyframes pulseCircuit { to { stroke-dashoffset: -20; } }
-        @keyframes targetPulse { 0% { box-shadow: 0 0 4px #ffffff; } 50% { box-shadow: 0 0 20px #ffffff, inset 0 0 10px #ffffff44; } 100% { box-shadow: 0 0 4px #ffffff; } }
-        @keyframes textBlink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
         .circuit-wire { stroke-dasharray: 6, 4; animation: pulseCircuit 1s linear infinite; }
-        .target-pulsing { animation: targetPulse 1.5s infinite ease-in-out !important; }
-        .routing-flash { animation: textBlink 0.6s infinite ease-in-out; color: #ff0055 !important; }
-        .drawer-input { background: #111116; border: 1px solid #222235; color: #00ffcc; padding: 8px; font-family: monospace; font-size: 0.8rem; width: 100%; box-sizing: border-box; border-radius: 4px; margin-top: 4px; outline: none; }
-        .drawer-input:focus { border-color: #00ffcc; }
+        .tab-btn { background: transparent; border: none; color: #666680; font-family: monospace; font-size: 0.9rem; font-weight: bold; cursor: pointer; padding: 12px 20px; transition: all 0.2s; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: #00ffcc; border-bottom: 2px solid #00ffcc; background: #15151f; }
+        .portfolio-card { background: #111116; border: 1px solid #222235; border-radius: 6px; padding: 24px; transition: transform 0.2s, border-color 0.2s; }
+        .portfolio-card:hover { transform: translateY(-2px); border-color: #00ffcc; }
+        .tech-tag { background: #161622; border: 1px solid #33334c; color: #8888aa; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .action-link-btn { background: #00ffcc; color: #050508; border: none; padding: 10px 18px; border-radius: 4px; font-family: monospace; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; font-size: 0.85rem; }
+        .action-link-btn:hover { background: #00ccaa; }
       `}</style>
 
-      <header style={styles.headerHUD}>
-        <div style={styles.logo}>NET_MATRIX // OPERATIONAL_SIMULATOR</div>
-        <div style={styles.actionsHUD}>
-          <button style={{ ...styles.linkButton, marginRight: '12px', backgroundColor: linkModeSourceId ? '#00ffcc' : '#1a1a24', color: linkModeSourceId ? '#000' : '#00ffcc' }} onClick={initiateLink}>
-            {linkModeSourceId ? "SELECT TARGET NODE..." : "⚡ LINK HARDWARE"}
+      {/* GLOBAL SYSTEM BAR & VIEW TOOGLE CONTROLLER */}
+      <header style={styles.globalHeader}>
+        <div style={styles.logoGroup}>
+          <span style={{ color: '#ff0055', fontWeight: 'bold' }}>▲</span> THE DIGITAL SABIO <span style={{ color: '#444' }}>//</span> ASSET MATRIX
+        </div>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <button className={`tab-btn ${viewMode === 'PORTFOLIO' ? 'active' : ''}`} onClick={() => setViewMode('PORTFOLIO')}>
+            📁 VENTURE_PORTFOLIO.md
           </button>
-          
-          {/* FILE ACTIONS BUTTON CORES */}
-          <label style={{ ...styles.linkButton, marginRight: '12px', borderColor: '#ffff00', color: '#ffff00', display: 'inline-block', cursor: 'pointer' }}>
-            📥 IMPORT MAP
-            <input type="file" accept=".json" onChange={importTopologyFromJSON} style={{ display: 'none' }} />
-          </label>
-          <button style={{ ...styles.linkButton, marginRight: '12px', borderColor: '#00ffcc', color: '#00ffcc' }} onClick={exportTopologyToJSON}>
-            💾 EXPORT MAP
-          </button>
-          <button style={{ ...styles.linkButton, marginRight: '12px', borderColor: '#ff0055', color: '#ff0055' }} onClick={clearTopologyMap}>
-            🗑️ PURGE STORAGE
-          </button>
-
-          <button style={styles.runButton} onClick={runRoutingDiagnostic} disabled={isSimulating}>
-            {isSimulating ? "TRANSMITTING..." : "RUN_DIAGNOSTIC.EXE"}
+          <button className={`tab-btn ${viewMode === 'SIMULATOR' ? 'active' : ''}`} onClick={() => setViewMode('SIMULATOR')}>
+            ⚙️ CYBER_NET_SIMULATOR.EXE
           </button>
         </div>
+        <div style={{ fontSize: '0.8rem', color: '#444455' }}>ENV: PRODUCTION_READY</div>
       </header>
 
-      <div style={styles.workspace}>
-        <aside style={styles.sidebarLeft}>
-          <h3 style={styles.panelTitle}>HARDWARE_BAY</h3>
-          <p style={styles.subtitle}>Initialize matrix arrays</p>
-          <button style={styles.nodeButton} onClick={() => spawnNode('WORKSTATION')}>[+] Workstation Node</button>
-          <button style={styles.nodeButton} onClick={() => spawnNode('ROUTER')}>[+] Nexus Core Router</button>
-          <button style={styles.nodeButton} onClick={() => spawnNode('SERVER')}>[+] Mainframe Data Core</button>
+      {/* CARD VIEW 1: MASTER VENTURE PORTFOLIO VIEW */}
+      {viewMode === 'PORTFOLIO' && (
+        <div style={styles.portfolioScrollArea}>
+          <section style={styles.heroSection}>
+            <div style={{ fontSize: '0.8rem', color: '#ff0055', fontWeight: 'bold', marginBottom: '6px', letterSpacing: '2px' }}>CORE PLATFORM SPECIFICATIONS</div>
+            <h1 style={styles.heroTitle}>Architecting Systems-Driven Digital Operations</h1>
+            <p style={styles.heroSubtitle}>
+              Engineering secure interactive software, optimized prompt pipelines, and granular infrastructure auditing modules designed to streamline tech team execution.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+              <span className="tech-tag" style={{ borderColor: '#00ffcc', color: '#00ffcc' }}>React 18</span>
+              <span className="tech-tag" style={{ borderColor: '#00ffcc', color: '#00ffcc' }}>TypeScript</span>
+              <span className="tech-tag">Vite Pipelines</span>
+              <span className="tech-tag">SVG Dynamic Layering</span>
+              <span className="tech-tag">State Serialization</span>
+              <span className="tech-tag">Systems Infrastructure Auditing</span>
+            </div>
+          </section>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #1a1a26', margin: '40px 0' }} />
+
+          <h2 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '20px', letterSpacing: '1px' }}>PROPRIETARY VENTURE PORTFOLIO APPLICATIONS</h2>
           
-          <h3 style={{ ...styles.panelTitle, color: '#ffff00', marginTop: '16px' }}>SECURITY_BAY</h3>
-          <p style={styles.subtitle}>Deploy perimeter systems</p>
-          <button style={{ ...styles.nodeButton, borderColor: '#ffff00', color: '#ffff00' }} onClick={() => spawnNode('FIREWALL')}>[+] Perimeter Firewall</button>
-          <button style={{ ...styles.nodeButton, borderColor: '#aa00ff', color: '#aa00ff' }} onClick={() => spawnNode('MALICIOUS')}>[+] Compromised Sector</button>
-
-          <div style={styles.firewallToggleContainer}>
-            <label style={{ fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input type="checkbox" checked={firewallBypassActive} onChange={(e) => setFirewallBypassActive(e.target.checked)} style={{ cursor: 'pointer' }} />
-              BYPASS FIREWALL PROTOCOLS
-            </label>
-          </div>
-        </aside>
-
-        <main style={styles.canvasArea} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onClick={() => setSelectedNodeId(null)}>
-          <svg style={styles.svgLayer}>
-            <defs>
-              <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-              </filter>
-            </defs>
-
-            {cables.map(cable => {
-              const source = nodes.find(n => n.id === cable.fromId);
-              const target = nodes.find(n => n.id === cable.toId);
-              if (!source || !target) return null;
-
-              const x1 = source.gridX + 52; const y1 = source.gridY + 52;
-              const x2 = target.gridX + 52; const y2 = target.gridY + 52;
-
-              const activeCableHop = simulationPath[currentPathIndex];
-              const isCableInActiveRoute = isSimulating && simulationPath.some(c => c.id === cable.id);
-              const isCableCurrentlyHot = isSimulating && activeCableHop?.id === cable.id;
-
-              let pX = x1; let pY = y1;
-              if (isCableCurrentlyHot) {
-                const globalWorkstation = nodes.find(n => n.type === 'WORKSTATION');
-                let entryNodeId = globalWorkstation ? globalWorkstation.id : cable.fromId;
-                
-                if (currentPathIndex > 0) {
-                  const prevCable = simulationPath[currentPathIndex - 1];
-                  const currentLegIdSet = new Set([cable.fromId, cable.toId]);
-                  entryNodeId = currentLegIdSet.has(prevCable.fromId) && prevCable.fromId !== activeCableHop.fromId && prevCable.fromId !== activeCableHop.toId ? prevCable.fromId : prevCable.toId;
-                }
-                
-                if (cable.toId === entryNodeId) {
-                  pX = x2 + (x1 - x2) * packetProgress;
-                  pY = y2 + (y1 - y2) * packetProgress;
-                } else {
-                  pX = x1 + (x2 - x1) * packetProgress;
-                  pY = y1 + (y2 - y1) * packetProgress;
-                }
-              }
-
-              return (
-                <g key={cable.id}>
-                  <line x1={x1} y1={y1} x2={x2} y2={y2} 
-                    style={{ ...styles.neonWire, stroke: isCableCurrentlyHot ? '#ff0055' : isCableInActiveRoute ? '#ff005577' : '#0099ff', strokeWidth: isCableCurrentlyHot ? 3.5 : 2 }} filter="url(#neonGlow)" 
-                  />
-                  <line x1={x1} y1={y1} x2={x2} y2={y2} className="circuit-wire" style={{ stroke: isCableCurrentlyHot ? '#ffff00' : '#00ffff', strokeWidth: 1.5, opacity: isCableInActiveRoute ? 1 : 0.4 }} />
-
-                  {isCableCurrentlyHot && (
-                    <circle cx={pX} cy={pY} r="7" fill="#ff0055" filter="url(#neonGlow)" />
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-
-          {nodes.map(node => {
-            const isSelectedSource = linkModeSourceId === node.id;
-            const isPendingMode = linkModeSourceId && linkModeSourceId !== 'PENDING';
-            const isValidTarget = isPendingMode && !isSelectedSource && hoveredNodeId === node.id;
-            const isDrawerFocused = selectedNodeId === node.id;
-            
-            const activeCableHop = simulationPath[currentPathIndex];
-            const isNodeCurrentlyRouting = isSimulating && activeCableHop && (activeCableHop.fromId === node.id || activeCableHop.toId === node.id);
-
-            let nodeColor = node.type === 'ROUTER' ? '#ff0055' : node.type === 'SERVER' ? '#00ffcc' : node.type === 'FIREWALL' ? '#ffff00' : node.type === 'MALICIOUS' ? '#aa00ff' : '#0099ff';
-            if (isSelectedSource) nodeColor = '#ffffff';
-            if (isValidTarget) nodeColor = '#ffff00';
-            
-            return (
-              <div key={node.id} 
-                onMouseDown={(e) => handleMouseDown(e, node)} 
-                onClick={(e) => { e.stopPropagation(); handleNodeClick(node); }} 
-                onMouseEnter={() => setHoveredNodeId(node.id)} 
-                onMouseLeave={() => setHoveredNodeId(null)}
-                className={isSelectedSource ? 'target-pulsing' : ''}
-                style={{ 
-                  ...styles.nodeSprite, 
-                  left: `${node.gridX}px`, 
-                  top: `${node.gridY}px`, 
-                  borderColor: isDrawerFocused ? '#ffffff' : nodeColor, 
-                  backgroundColor: isSelectedSource ? '#1b1b26' : '#0d0d14', 
-                  boxShadow: isDrawerFocused ? '0 0 22px #ffffff' : isSelectedSource ? '0 0 20px #ffffff' : isValidTarget ? '0 0 20px #ffff00' : isNodeCurrentlyRouting ? `0 0 16px ${nodeColor}` : `0 4px 14px rgba(0,0,0,0.7), inset 0 0 8px ${nodeColor}22` 
-                }}
-              >
-                <div style={{ ...styles.cornerAccent, top: -1, left: -1, borderTop: `2px solid ${nodeColor}`, borderLeft: `2px solid ${nodeColor}` }} />
-                <div style={{ ...styles.cornerAccent, top: -1, right: -1, borderTop: `2px solid ${nodeColor}`, borderRight: `2px solid ${nodeColor}` }} />
-                <div style={{ ...styles.cornerAccent, bottom: -1, left: -1, borderBottom: `2px solid ${nodeColor}`, borderLeft: `2px solid ${nodeColor}` }} />
-                <div style={{ ...styles.cornerAccent, bottom: -1, right: -1, borderBottom: `2px solid ${nodeColor}`, borderRight: `2px solid ${nodeColor}` }} />
-
-                <div style={styles.stateStatusBar}>
-                  <span className={isNodeCurrentlyRouting ? 'routing-flash' : ''} style={{ color: isSelectedSource ? '#ffffff' : '#666677' }}>
-                    ● {isNodeCurrentlyRouting ? 'ROUTING' : isSelectedSource ? 'LINK_SRC' : node.type}
-                  </span>
+          <div style={styles.portfolioGrid}>
+            {/* PLATFORM CODE PIECE: NETWORK ENGINE */}
+            <div className="portfolio-card" style={{ gridColumn: '1 / -1', borderLeft: '4px solid #ff0055' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <span style={{ color: '#ff0055', fontSize: '0.75rem', fontWeight: 'bold' }}>FULL-STACK WEB ENGINE PRODUCTION</span>
+                  <h3 style={styles.cardTitle}>Cyber Network Simulator Core</h3>
+                  <p style={styles.cardDescription}>
+                    An interactive graphical interface engineered to simulate multi-node infrastructure routing, dynamic short-path configurations, and perimeter defense layers.
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <span className="tech-tag">HTML5 SVG Serialization</span>
+                    <span className="tech-tag">Dynamic Pathfinding Engine</span>
+                    <span className="tech-tag">LocalStorage Mapping</span>
+                  </div>
                 </div>
-
-                <div style={styles.graphicContainer}>{renderHardwareGraphic(node.type, nodeColor)}</div>
-                <div style={{ ...styles.nodeLabel, color: nodeColor }}>{node.label}</div>
-                <div style={styles.nodeIP}>{node.ipAddress}</div>
-
-                <div style={styles.metricsPanel}>
-                  <div>TX: {node.txCount}</div>
-                  <div>RX: {node.rxCount}</div>
-                </div>
-              </div>
-            );
-          })}
-        </main>
-
-        {/* FEATURE 1: INTERACTIVE HUD DRAWER SIDE PANEL */}
-        {activeFocusedNode && (
-          <aside style={styles.sidebarRight}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ ...styles.panelTitle, color: activeFocusedNode.type === 'FIREWALL' ? '#ffff00' : '#ffffff' }}>
-                {activeFocusedNode.type === 'FIREWALL' ? 'SEC_PERIMETER // HUD' : 'CORE_CONFIG // HUD'}
-              </h3>
-              <button style={styles.closeDrawerBtn} onClick={() => setSelectedNodeId(null)}>✕</button>
-            </div>
-            
-            <div style={styles.drawerFieldBlock}>
-              <label style={styles.drawerLabel}>HARDWARE IDENTIFIER</label>
-              <input type="text" className="drawer-input" value={activeFocusedNode.label} onChange={(e) => handleUpdateNodeField(activeFocusedNode.id, 'label', e.target.value)} />
-            </div>
-
-            <div style={styles.drawerFieldBlock}>
-              <label style={styles.drawerLabel}>LOCAL IP VECTOR ADDRESS</label>
-              <input type="text" className="drawer-input" value={activeFocusedNode.ipAddress} onChange={(e) => handleUpdateNodeField(activeFocusedNode.id, 'ipAddress', e.target.value)} />
-            </div>
-
-            {/* CONDITIONAL SECURITY RULES ENVELOPE FOR FIREWALL CORES */}
-            {activeFocusedNode.type === 'FIREWALL' && (
-              <div style={{ ...styles.drawerTelemetryCard, borderColor: '#ffff00' }}>
-                <div style={{ ...styles.drawerLabel, color: '#ffff00' }}>FIREWALL INTERCEPT LAYER</div>
-                <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>
-                  Status: <span style={{ color: firewallBypassActive ? '#ff0055' : '#00ffcc', fontWeight: 'bold' }}>
-                    {firewallBypassActive ? "⚠️ BYPASSED (INACTIVE)" : "🔒 ACTIVE PROTECTION SHIELD"}
-                  </span>
-                </div>
-                <button 
-                  style={{ 
-                    ...styles.drawerResetBtn, 
-                    background: firewallBypassActive ? '#00ffcc22' : '#ff005522', 
-                    borderColor: firewallBypassActive ? '#00ffcc' : '#ff0055', 
-                    color: firewallBypassActive ? '#00ffcc' : '#ff0055',
-                    marginTop: '12px'
-                  }} 
-                  onClick={handleToggleFirewallRule}
-                >
-                  {firewallBypassActive ? "ENGAGE SECURITY PERIMETER" : "DISABLE SECURITY SHIELD"}
+                <button className="action-link-btn" style={{ backgroundColor: '#ff0055', color: '#fff' }} onClick={() => setViewMode('SIMULATOR')}>
+                  LAUNCH SIMULATOR ENGINE →
                 </button>
               </div>
-            )}
-
-            <div style={styles.drawerTelemetryCard}>
-              <div style={styles.drawerLabel}>HARDWARE TRAFFIC STATISTICS</div>
-              <div style={{ marginTop: '6px', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div>Total Packets Transmitted (TX): <span style={{ color: '#00ffcc' }}>{activeFocusedNode.txCount} pkts</span></div>
-                <div>Total Packets Received (RX): <span style={{ color: '#00ffcc' }}>{activeFocusedNode.rxCount} pkts</span></div>
-              </div>
-              <button style={styles.drawerResetBtn} onClick={() => handleResetNodeStats(activeFocusedNode.id)}>PURGE TELEMETRY CACHE</button>
             </div>
-          </aside>
-        )}
-      </div>
 
-      <footer style={styles.terminalContainer}>
-        <div style={styles.terminalHeader}>SYSTEM_LOG_STREAM // FEED.LOG</div>
-        <div style={styles.terminalBody}>
-          {terminalLogs.map((log, index) => <div key={index} style={styles.terminalLine}>{log}</div>)}
+            {/* PRODUCT CARD 2: AI HUB */}
+            <div className="portfolio-card">
+              <span style={{ color: '#00ffcc', fontSize: '0.75rem', fontWeight: 'bold' }}>ENTERPRISE DIGITAL ASSET</span>
+              <h3 style={styles.cardTitle}>AI Operations Hub</h3>
+              <p style={styles.cardDescription}>
+                A robust operations interface mapping prompt-engineering structures, generative workflow pipelines, and deployment logs for AI operations management.
+              </p>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
+                <span className="tech-tag">Workflow Automation</span>
+                <span className="tech-tag">Prompt Engineering</span>
+              </div>
+            </div>
+
+            {/* PRODUCT CARD 3: WORKFLOW LIBRARY */}
+            <div className="portfolio-card">
+              <span style={{ color: '#ffff00', fontSize: '0.75rem', fontWeight: 'bold' }}>OPERATIONAL ARCHITECTURE</span>
+              <h3 style={styles.cardTitle}>Master SOP & Workflow Library</h3>
+              <p style={styles.cardDescription}>
+                A structured standard operating framework built to document, track, and scale critical technical procedures, security protocols, and engineering policies.
+              </p>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
+                <span className="tech-tag">SOP Frameworks</span>
+                <span className="tech-tag">Policy Mapping</span>
+              </div>
+            </div>
+
+            {/* PRODUCT CARD 4: SAAS AUDITOR */}
+            <div className="portfolio-card">
+              <span style={{ color: '#aa00ff', fontSize: '0.75rem', fontWeight: 'bold' }}>AUDITING MODULE</span>
+              <h3 style={styles.cardTitle}>SaaS Tracker & Tech Stack Auditor</h3>
+              <p style={styles.cardDescription}>
+                A comprehensive software asset accounting system tracking technical redundancy overhead, active API licensing matrices, and budget optimizations.
+              </p>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
+                <span className="tech-tag">Systems Auditing</span>
+                <span className="tech-tag">Resource Allocation</span>
+              </div>
+            </div>
+          </div>
+
+          <footer style={styles.portfolioFooter}>
+            <div>© 2026 The Digital Sabio. Built with premium custom code infrastructure on macOS systems.</div>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+              <span style={{ color: '#444455' }}>GitHub: Linked Profile</span>
+              <span style={{ color: '#444455' }}>Deployments: Connected Production Pipeline Vercel V1</span>
+            </div>
+          </footer>
         </div>
-      </footer>
+      )}
+
+      {/* CARD VIEW 2: CORE CYBER SIMULATOR INSTANCE */}
+      {viewMode === 'SIMULATOR' && (
+        <>
+          <div style={styles.simulatorActionHUD}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              // AFTER
+              <button style={{ ...styles.linkButton, backgroundColor: linkModeSourceId ? '#00ffcc' : '#161622', color: linkModeSourceId ? '#000' : '#00ffcc' }} onClick={() => setLinkModeSourceId('PENDING')}>                {linkModeSourceId ? "SELECT TARGET NODE VECTOR..." : "⚡ LINK HARDWARE MATRIX"}
+              </button>
+              <label style={styles.fileUploadLabel}>
+                📥 IMPORT TOPOLOGY
+                <input type="file" accept=".json" onChange={importTopologyFromJSON} style={{ display: 'none' }} />
+              </label>
+              <button style={styles.linkButton} onClick={exportTopologyToJSON}>💾 EXPORT TOPOLOGY</button>
+              <button style={{ ...styles.linkButton, borderColor: '#ff0055', color: '#ff0055' }} onClick={clearTopologyMap}>🗑️ WIPE LOCAL ARRAYS</button>
+            </div>
+            <button style={styles.runButton} onClick={runRoutingDiagnostic} disabled={isSimulating}>
+              {isSimulating ? "COMPUTING ROUTE VECTOR..." : "RUN_DIAGNOSTIC.EXE"}
+            </button>
+          </div>
+
+          <div style={styles.workspace}>
+            <aside style={styles.sidebarLeft}>
+              <h3 style={styles.panelTitle}>HARDWARE_BAY</h3>
+              <p style={styles.subtitle}>Initialize matrix arrays</p>
+              <button style={styles.nodeButton} onClick={() => spawnNode('WORKSTATION')}>[+] Workstation Node</button>
+              <button style={styles.nodeButton} onClick={() => spawnNode('ROUTER')}>[+] Nexus Core Router</button>
+              <button style={styles.nodeButton} onClick={() => spawnNode('SERVER')}>[+] Mainframe Data Core</button>
+              
+              <h3 style={{ ...styles.panelTitle, color: '#ffff00', marginTop: '16px' }}>SECURITY_BAY</h3>
+              <p style={styles.subtitle}>Deploy perimeter systems</p>
+              <button style={{ ...styles.nodeButton, borderColor: '#ffff00', color: '#ffff00' }} onClick={() => spawnNode('FIREWALL')}>[+] Perimeter Firewall</button>
+              <button style={{ ...styles.nodeButton, borderColor: '#aa00ff', color: '#aa00ff' }} onClick={() => spawnNode('MALICIOUS')}>[+] Compromised Sector</button>
+            </aside>
+
+            <main style={styles.canvasArea} onMouseMove={(e) => {
+              if (!draggingNodeId.current) return;
+              const canvas = e.currentTarget.getBoundingClientRect();
+              setNodes(prev => prev.map(node => node.id === draggingNodeId.current ? { ...node, gridX: e.clientX - canvas.left - dragOffset.current.x, gridY: e.clientY - canvas.top - dragOffset.current.y } : node));
+            }} onMouseUp={() => {
+              if (draggingNodeId.current) {
+                const finalId = draggingNodeId.current;
+                setNodes(prev => prev.map(node => node.id === finalId ? { ...node, gridX: Math.round(node.gridX / 20) * 20, gridY: Math.round(node.gridY / 20) * 20 } : node));
+                draggingNodeId.current = null;
+              }
+            }} onClick={() => setSelectedNodeId(null)}>
+              <svg style={styles.svgLayer}>
+                <defs>
+                  <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
+
+                {cables.map(cable => {
+                  const source = nodes.find(n => n.id === cable.fromId); const target = nodes.find(n => n.id === cable.toId);
+                  if (!source || !target) return null;
+                  const x1 = source.gridX + 52; const y1 = source.gridY + 52;
+                  const x2 = target.gridX + 52; const y2 = target.gridY + 52;
+
+                  const activeCableHop = simulationPath[currentPathIndex];
+                  const isCableInActiveRoute = isSimulating && simulationPath.some(c => c.id === cable.id);
+                  const isCableCurrentlyHot = isSimulating && activeCableHop?.id === cable.id;
+
+                  let pX = x1, pY = y1;
+                  if (isCableCurrentlyHot) {
+                    const globalWorkstation = nodes.find(n => n.type === 'WORKSTATION');
+                    let entryNodeId = globalWorkstation ? globalWorkstation.id : cable.fromId;
+                    if (currentPathIndex > 0) {
+                      const prevCable = simulationPath[currentPathIndex - 1];
+                      entryNodeId = new Set([cable.fromId, cable.toId]).has(prevCable.fromId) && prevCable.fromId !== activeCableHop.fromId && prevCable.fromId !== activeCableHop.toId ? prevCable.fromId : prevCable.toId;
+                    }
+                    if (cable.toId === entryNodeId) { pX = x2 + (x1 - x2) * packetProgress; pY = y2 + (y1 - y2) * packetProgress; }
+                    else { pX = x1 + (x2 - x1) * packetProgress; pY = y1 + (y2 - y1) * packetProgress; }
+                  }
+
+                  return (
+                    <g key={cable.id}>
+                      <line x1={x1} y1={y1} x2={x2} y2={y2} style={{ stroke: isCableCurrentlyHot ? '#ff0055' : isCableInActiveRoute ? '#ff005577' : '#0099ff', strokeWidth: isCableCurrentlyHot ? 3.5 : 2 }} filter="url(#neonGlow)" />
+                      <line x1={x1} y1={y1} x2={x2} y2={y2} className="circuit-wire" style={{ stroke: isCableCurrentlyHot ? '#ffff00' : '#00ffff', strokeWidth: 1.5, opacity: isCableInActiveRoute ? 1 : 0.4 }} />
+                      {isCableCurrentlyHot && <circle cx={pX} cy={pY} r="7" fill="#ff0055" filter="url(#neonGlow)" />}
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {nodes.map(node => {
+                const isSelectedSource = linkModeSourceId === node.id;
+                const isDrawerFocused = selectedNodeId === node.id;
+                const activeCableHop = simulationPath[currentPathIndex];
+                const isNodeCurrentlyRouting = isSimulating && activeCableHop && (activeCableHop.fromId === node.id || activeCableHop.toId === node.id);
+
+                let nodeColor = node.type === 'ROUTER' ? '#ff0055' : node.type === 'SERVER' ? '#00ffcc' : node.type === 'FIREWALL' ? '#ffff00' : node.type === 'MALICIOUS' ? '#aa00ff' : '#0099ff';
+                if (isSelectedSource) nodeColor = '#ffffff';
+
+                return (
+                  <div key={node.id} onMouseDown={(e) => {
+                    e.stopPropagation(); if (linkModeSourceId === 'PENDING') { setLinkModeSourceId(node.id); logToTerminal(`Source node mapped.`); return; }
+                    if (linkModeSourceId && linkModeSourceId !== 'PENDING') {
+                      if (linkModeSourceId === node.id) { setLinkModeSourceId(null); return; }
+                      const connectionExists = cables.some(c => (c.fromId === linkModeSourceId && c.toId === node.id) || (c.fromId === node.id && c.toId === linkModeSourceId));
+                      if (connectionExists) { setLinkModeSourceId(null); return; }
+                      setCables([...cables, { id: `cable_${Math.random().toString(36).substring(2, 9)}`, fromId: linkModeSourceId, toId: node.id }]);
+                      setLinkModeSourceId(null); logToTerminal(`Link mapped.`); return;
+                    }
+                    draggingNodeId.current = node.id; setSelectedNodeId(node.id);
+                    const rect = e.currentTarget.getBoundingClientRect(); dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                  }} style={{ ...styles.nodeSprite, left: `${node.gridX}px`, top: `${node.gridY}px`, borderColor: isDrawerFocused ? '#ffffff' : nodeColor, boxShadow: isDrawerFocused ? '0 0 22px #ffffff' : isNodeCurrentlyRouting ? `0 0 16px ${nodeColor}` : `0 4px 14px rgba(0,0,0,0.7)` }}>
+                    <div style={{ fontSize: '0.55rem', color: '#666677', width: '100%', paddingLeft: '8px' }}>● {node.type}</div>
+                    <div style={{ height: '32px', display: 'flex', alignItems: 'center' }}>{renderHardwareGraphic(node.type, nodeColor)}</div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 'bold', color: nodeColor }}>{node.label}</div>
+                    <div style={{ fontSize: '0.6rem', color: '#444455' }}>{node.ipAddress}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '88%', borderTop: '1px solid #222230', marginTop: '6px', paddingTop: '4px', fontSize: '0.55rem', color: '#666677' }}>
+                      <div>TX: {node.txCount}</div><div>RX: {node.rxCount}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </main>
+
+            {/* EXPANDED SYSTEM DRAWERS */}
+            {selectedNodeId && (
+              <aside style={styles.sidebarRight}>
+                {nodes.find(n => n.id === selectedNodeId) && (() => {
+                  const focusedNode = nodes.find(n => n.id === selectedNodeId)!;
+                  return (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 style={styles.panelTitle}>CONFIGURATION // HUD</h3>
+                        <button style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }} onClick={() => setSelectedNodeId(null)}>✕</button>
+                      </div>
+                      <div style={{ marginTop: '12px' }}>
+                        <label style={{ fontSize: '0.65rem', color: '#666' }}>NODE LABELLING</label>
+                        <input type="text" className="drawer-input" value={focusedNode.label} onChange={(e) => setNodes(prev => prev.map(n => n.id === focusedNode.id ? { ...n, label: e.target.value } : n))} />
+                      </div>
+                      <div style={{ marginTop: '12px' }}>
+                        <label style={{ fontSize: '0.65rem', color: '#666' }}>IP IP_ADDRESS_SUITE</label>
+                        <input type="text" className="drawer-input" value={focusedNode.ipAddress} onChange={(e) => setNodes(prev => prev.map(n => n.id === focusedNode.id ? { ...n, ipAddress: e.target.value } : n))} />
+                      </div>
+                      {focusedNode.type === 'FIREWALL' && (
+                        <div style={{ marginTop: '16px', background: '#171722', padding: '12px', border: '1px dashed #ffff0033', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#ffff00', d: 'block' }}>SECURITY RULE INTERCEPT</span>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', marginTop: '8px', color: '#aaa', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={firewallBypassActive} onChange={(e) => setFirewallBypassActive(e.target.checked)} />
+                            BYPASS SECURITY FILTERING
+                          </label>
+                        </div>
+                      )}
+                      <button style={{ ...styles.nodeButton, borderColor: '#ff0055', color: '#ff0055', marginTop: '20px', fontSize: '0.7rem', textAlign: 'center' }} onClick={() => setNodes(prev => prev.map(n => n.id === focusedNode.id ? { ...n, txCount: 0, rxCount: 0 } : n))}>
+                        RESET HARDWARE STATS
+                      </button>
+                    </>
+                  );
+                })()}
+              </aside>
+            )}
+          </div>
+
+          <footer style={styles.terminalContainer}>
+            <div style={styles.terminalHeader}>SYSTEM_LOG_STREAM // FEED.LOG</div>
+            <div style={styles.terminalBody}>
+              {terminalLogs.map((log, index) => <div key={index} style={{ fontSize: '0.85rem', color: '#00ffcc' }}>{log}</div>)}
+            </div>
+          </footer>
+        </>
+      )}
     </div>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  dashboardContainer: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0a0a0c', color: '#00ffcc', fontFamily: 'monospace', overflow: 'hidden', userSelect: 'none' },
-  headerHUD: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', backgroundColor: '#111115', borderBottom: '2px solid #222' },
-  logo: { fontSize: '1.1rem', fontWeight: 'bold', letterSpacing: '2px', color: '#00ffcc' },
-  actionsHUD: { display: 'flex', alignItems: 'center' },
-  linkButton: { border: '1px solid #00ffcc', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', letterSpacing: '1px', background: 'transparent' },
-  runButton: { backgroundColor: '#ff0055', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 0 10px #ff0055' },
+  dashboardContainer: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0a0a0c', color: '#00ffcc', fontFamily: 'monospace', overflow: 'hidden' },
+  globalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111116', borderBottom: '1px solid #1c1c28', padding: '0 24px', height: '54px' },
+  logoGroup: { fontSize: '0.95rem', fontWeight: 'bold', letterSpacing: '1px', color: '#fff' },
+  portfolioScrollArea: { flex: 1, overflowY: 'auto', padding: '40px 60px', backgroundColor: '#060609', maxWidth: '1200px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
+  heroSection: { marginTop: '20px' },
+  heroTitle: { fontSize: '2.2rem', color: '#ffffff', margin: '8px 0', fontWeight: '8xl', letterSpacing: '-0.5px' },
+  heroSubtitle: { color: '#8888aa', fontSize: '1.05rem', lineHeight: '1.6', maxWidth: '800px', margin: '0' },
+  portfolioGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', marginTop: '24px' },
+  cardTitle: { color: '#ffffff', fontSize: '1.15rem', margin: '6px 0 10px 0' },
+  cardDescription: { color: '#888899', fontSize: '0.85rem', lineHeight: '1.5', margin: '0' },
+  portfolioFooter: { marginTop: '80px', borderTop: '1px solid #1a1a26', paddingTop: '20px', fontSize: '0.75rem', color: '#444455', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' },
+  simulatorActionHUD: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 24px', backgroundColor: '#13131a', borderBottom: '2px solid #1c1c28' },
+  linkButton: { border: '1px solid #00ffcc', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', background: 'transparent', color: '#00ffcc', fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 'bold' },
+  fileUploadLabel: { border: '1px solid #ffff00', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', color: '#ffff00', fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-block' },
+  runButton: { backgroundColor: '#ff0055', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '0.75rem' },
   workspace: { display: 'flex', flex: 1, overflow: 'hidden' },
-  sidebarLeft: { width: '260px', backgroundColor: '#111115', borderRight: '2px solid #222', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 10 },
-  sidebarRight: { width: '280px', backgroundColor: '#111115', borderLeft: '2px solid #222', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', zIndex: 10 },
-  panelTitle: { color: '#ff0055', margin: 0, fontSize: '1rem', letterSpacing: '1px' },
-  subtitle: { color: '#666', fontSize: '0.8rem', margin: '0 0 4px 0' },
-  nodeButton: { backgroundColor: '#1a1a24', color: '#00ffcc', border: '1px solid #00ffcc', padding: '12px', textAlign: 'left', cursor: 'pointer', fontWeight: 'bold', borderRadius: '4px' },
-  firewallToggleContainer: { borderTop: '1px solid #222235', marginTop: '14px', paddingTop: '14px', color: '#666677' },
+  sidebarLeft: { width: '240px', backgroundColor: '#111116', borderRight: '1px solid #1c1c28', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' },
+  sidebarRight: { width: '260px', backgroundColor: '#111116', borderLeft: '1px solid #1c1c28', padding: '20px', display: 'flex', flexDirection: 'column' },
+  panelTitle: { color: '#ff0055', margin: 0, fontSize: '0.9rem', letterSpacing: '1px' },
+  subtitle: { color: '#555', fontSize: '0.75rem', margin: '0 0 4px 0' },
+  nodeButton: { backgroundColor: '#15151f', color: '#00ffcc', border: '1px solid #00ffcc33', padding: '10px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.8rem' },
   canvasArea: { flex: 1, backgroundColor: '#060608', position: 'relative', backgroundImage: 'radial-gradient(#1c1c28 1.5px, transparent 1.5px)', backgroundSize: '20px 20px', overflow: 'hidden' },
   svgLayer: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 },
-  neonWire: { stroke: '#0099ff', strokeWidth: 2 },
-  nodeSprite: { position: 'absolute', width: '104px', height: '114px', border: '1px solid', borderRadius: '4px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 5, cursor: 'grab', transition: 'box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease', padding: '4px 0' },
-  cornerAccent: { position: 'absolute', width: '6px', height: '6px', pointerEvents: 'none' },
-  stateStatusBar: { fontSize: '0.55rem', alignSelf: 'flex-start', paddingLeft: '8px', marginBottom: '2px', letterSpacing: '0.5px' },
-  graphicContainer: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '32px', marginBottom: '2px' },
-  nodeLabel: { fontSize: '0.7rem', fontWeight: 'bold', letterSpacing: '0.5px' },
-  nodeIP: { fontSize: '0.6rem', color: '#444455', marginTop: '1px' },
-  metricsPanel: { display: 'flex', justifyContent: 'space-between', width: '88%', borderTop: '1px solid #222230', marginTop: '6px', paddingTop: '4px', fontSize: '0.55rem', color: '#666677' },
-  drawerFieldBlock: { display: 'flex', flexDirection: 'column' },
-  drawerLabel: { fontSize: '0.65rem', color: '#666680', letterSpacing: '0.5px' },
-  drawerTelemetryCard: { background: '#14141c', border: '1px dashed #222235', padding: '12px', borderRadius: '4px', marginTop: '8px' },
-  drawerResetBtn: { background: '#ff005522', border: '1px solid #ff0055', color: '#ff0055', padding: '6px', fontFamily: 'monospace', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer', borderRadius: '4px', width: '100%', marginTop: '12px' },
-  closeDrawerBtn: { background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '1rem' },
-  terminalContainer: { height: '160px', backgroundColor: '#07070a', borderTop: '2px solid #222', display: 'flex', flexDirection: 'column', zIndex: 10 },
-  terminalHeader: { backgroundColor: '#111115', padding: '6px 16px', fontSize: '0.75rem', color: '#666', borderBottom: '1px solid #222' },
-  terminalBody: { flex: 1, padding: '12px 16px', overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse', gap: '4px' },
-  terminalLine: { fontSize: '0.85rem', color: '#00ffcc', lineHeight: '1.4' }
+  nodeSprite: { position: 'absolute', width: '104px', height: '104px', border: '1px solid', borderRadius: '4px', backgroundColor: '#0d0d14', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 5, cursor: 'grab', padding: '4px 0' },
+  terminalContainer: { height: '140px', backgroundColor: '#07070a', borderTop: '1px solid #1c1c28', display: 'flex', flexDirection: 'column' },
+  terminalHeader: { backgroundColor: '#111116', padding: '4px 16px', fontSize: '0.7rem', color: '#555' },
+  terminalBody: { flex: 1, padding: '10px 16px', overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse', gap: '2px' }
 };
