@@ -20,9 +20,23 @@ interface NetworkCable {
   toId: string;
 }
 
+// --- NEW DEFINITION FOR DIGITAL ASSET PREVIEWS ---
+interface DigitalAsset {
+  id: string;
+  title: string;
+  category: string;
+  badgeColor: string;
+  shortDesc: string;
+  fullScope: string[];
+  features: string[];
+  previewPlaceholderText: string; // This can later be replaced with an <img src="..." /> tag
+  storeUrl: string;
+}
+
 export const App: React.FC = () => {
   // --- VIEW CONFIGURATION STATE ---
   const [viewMode, setViewMode] = useState<ViewMode>('PORTFOLIO');
+  const [selectedAsset, setSelectedAsset] = useState<DigitalAsset | null>(null);
 
   // --- CORE SIMULATOR STATE MAPS ---
   const [nodes, setNodes] = useState<NetworkNode[]>([]);
@@ -44,6 +58,55 @@ export const App: React.FC = () => {
 
   const draggingNodeId = useRef<string | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
+
+  // --- STATIC ASSET DATA MAP ---
+  const digitalAssets: DigitalAsset[] = [
+    {
+      id: 'ai-hub',
+      title: 'AI Operations Hub',
+      category: 'ENTERPRISE DIGITAL ASSET',
+      badgeColor: '#00ffcc',
+      shortDesc: 'A robust operations interface mapping prompt-engineering structures, generative workflow pipelines, and deployment logs.',
+      fullScope: [
+        'Centralizes organizational prompt engineering strategies into reusable technical assets.',
+        'Tracks multi-modal AI model outputs, parameter settings, and operational deployment costs.',
+        'Maps custom generative AI pipelines to existing technical department workflows.'
+      ],
+      features: ['Prompt Matrix Repository', 'Model Parameter Logs', 'Pipeline Deployment Mapping', 'Token & Cost Tracking Logs'],
+      previewPlaceholderText: '[📊 AI_OPERATIONS_HUB_DASHBOARD_PREVIEW.JPG]',
+      storeUrl: 'https://cyber-net-simulator.vercel.app' // Replace with Gumroad/Payhip link later
+    },
+    {
+      id: 'sop-library',
+      title: 'Master SOP & Workflow Library',
+      category: 'OPERATIONAL ARCHITECTURE',
+      badgeColor: '#ffff00',
+      shortDesc: 'A structured standard operating framework built to document, track, and scale critical technical procedures and engineering policies.',
+      fullScope: [
+        'Standardizes cross-department technical workflows to ensure architectural compliance.',
+        'Features an integrated verification and audit tracking matrix for recurring operations.',
+        'Minimizes organizational friction during software development and infrastructure scaling phases.'
+      ],
+      features: ['Interactive Step Verification', 'Role-Based Access Mapping', 'Audit Lifecycle Tracking', 'System Dependency Linking'],
+      previewPlaceholderText: '[📚 MASTER_SOP_WORKSPACE_PREVIEW.JPG]',
+      storeUrl: 'https://cyber-net-simulator.vercel.app' // Replace with Gumroad/Payhip link later
+    },
+    {
+      id: 'saas-tracker',
+      title: 'SaaS Tracker & Tech Stack Auditor',
+      category: 'AUDITING MODULE',
+      badgeColor: '#aa00ff',
+      shortDesc: 'A comprehensive software asset accounting system tracking technical redundancy overhead, active API licensing matrices, and budget optimizations.',
+      fullScope: [
+        'Provides full visibility into software cost centers, software licensing overhead, and renewal cadences.',
+        'Audits API integrations and tech stacks to reveal functional software redundancies.',
+        'Optimizes operational budgets by automatically mapping underutilized software licenses.'
+      ],
+      features: ['Licensing & Renewal Alarms', 'Functional Redundancy Auditing', 'API Endpoint Matrix Map', 'Cost Optimization Dashboard'],
+      previewPlaceholderText: '[🛡️ SAAS_TECH_STACK_AUDITOR_PREVIEW.JPG]',
+      storeUrl: 'https://cyber-net-simulator.vercel.app' // Replace with Gumroad/Payhip link later
+    }
+  ];
 
   // Load saved layouts
   useEffect(() => {
@@ -222,14 +285,16 @@ export const App: React.FC = () => {
         .circuit-wire { stroke-dasharray: 6, 4; animation: pulseCircuit 1s linear infinite; }
         .tab-btn { background: transparent; border: none; color: #666680; font-family: monospace; font-size: 0.9rem; font-weight: bold; cursor: pointer; padding: 12px 20px; transition: all 0.2s; border-bottom: 2px solid transparent; }
         .tab-btn.active { color: #00ffcc; border-bottom: 2px solid #00ffcc; background: #15151f; }
-        .portfolio-card { background: #111116; border: 1px solid #222235; border-radius: 6px; padding: 24px; transition: transform 0.2s, border-color 0.2s; }
+        .portfolio-card { background: #111116; border: 1px solid #222235; border-radius: 6px; padding: 24px; transition: transform 0.2s, border-color 0.2s; cursor: pointer; }
         .portfolio-card:hover { transform: translateY(-2px); border-color: #00ffcc; }
         .tech-tag { background: #161622; border: 1px solid #33334c; color: #8888aa; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         .action-link-btn { background: #00ffcc; color: #050508; border: none; padding: 10px 18px; border-radius: 4px; font-family: monospace; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; font-size: 0.85rem; }
         .action-link-btn:hover { background: #00ccaa; }
+        .drawer-input { background: #161622; border: 1px solid #2c2c3e; color: #fff; padding: 8px; width: 100%; border-radius: 4px; font-family: monospace; font-size: 0.8rem; margin-top: 4px; box-sizing: border-box; }
+        .drawer-input:focus { outline: none; border-color: #00ffcc; }
       `}</style>
 
-      {/* GLOBAL SYSTEM BAR & VIEW TOOGLE CONTROLLER */}
+      {/* GLOBAL SYSTEM BAR & VIEW TOGGLE CONTROLLER */}
       <header style={styles.globalHeader}>
         <div style={styles.logoGroup}>
           <span style={{ color: '#ff0055', fontWeight: 'bold' }}>▲</span> THE DIGITAL SABIO <span style={{ color: '#444' }}>//</span> ASSET MATRIX
@@ -270,7 +335,7 @@ export const App: React.FC = () => {
           
           <div style={styles.portfolioGrid}>
             {/* PLATFORM CODE PIECE: NETWORK ENGINE */}
-            <div className="portfolio-card" style={{ gridColumn: '1 / -1', borderLeft: '4px solid #ff0055' }}>
+            <div className="portfolio-card" style={{ gridColumn: '1 / -1', borderLeft: '4px solid #ff0055' }} onClick={() => setViewMode('SIMULATOR')}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                 <div>
                   <span style={{ color: '#ff0055', fontSize: '0.75rem', fontWeight: 'bold' }}>FULL-STACK WEB ENGINE PRODUCTION</span>
@@ -284,51 +349,77 @@ export const App: React.FC = () => {
                     <span className="tech-tag">LocalStorage Mapping</span>
                   </div>
                 </div>
-                <button className="action-link-btn" style={{ backgroundColor: '#ff0055', color: '#fff' }} onClick={() => setViewMode('SIMULATOR')}>
+                <button className="action-link-btn" style={{ backgroundColor: '#ff0055', color: '#fff' }} onClick={(e) => { e.stopPropagation(); setViewMode('SIMULATOR'); }}>
                   LAUNCH SIMULATOR ENGINE →
                 </button>
               </div>
             </div>
 
-            {/* PRODUCT CARD 2: AI HUB */}
-            <div className="portfolio-card">
-              <span style={{ color: '#00ffcc', fontSize: '0.75rem', fontWeight: 'bold' }}>ENTERPRISE DIGITAL ASSET</span>
-              <h3 style={styles.cardTitle}>AI Operations Hub</h3>
-              <p style={styles.cardDescription}>
-                A robust operations interface mapping prompt-engineering structures, generative workflow pipelines, and deployment logs for AI operations management.
-              </p>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
-                <span className="tech-tag">Workflow Automation</span>
-                <span className="tech-tag">Prompt Engineering</span>
+            {/* MAP DYNAMIC LOGIC FOR DIGITAL PREMIUM INFRASTRUCTURE ASSETS */}
+            {digitalAssets.map(asset => (
+              <div key={asset.id} className="portfolio-card" onClick={() => setSelectedAsset(asset)}>
+                <span style={{ color: asset.badgeColor, fontSize: '0.75rem', fontWeight: 'bold' }}>{asset.category}</span>
+                <h3 style={styles.cardTitle}>{asset.title}</h3>
+                <p style={styles.cardDescription}>{asset.shortDesc}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {asset.features.slice(0, 2).map((feat, idx) => (
+                      <span key={idx} className="tech-tag">{feat}</span>
+                    ))}
+                  </div>
+                  <span style={{ color: asset.badgeColor, fontSize: '0.8rem', fontWeight: 'bold' }}>VIEW BLUEPRINT ↗</span>
+                </div>
               </div>
-            </div>
-
-            {/* PRODUCT CARD 3: WORKFLOW LIBRARY */}
-            <div className="portfolio-card">
-              <span style={{ color: '#ffff00', fontSize: '0.75rem', fontWeight: 'bold' }}>OPERATIONAL ARCHITECTURE</span>
-              <h3 style={styles.cardTitle}>Master SOP & Workflow Library</h3>
-              <p style={styles.cardDescription}>
-                A structured standard operating framework built to document, track, and scale critical technical procedures, security protocols, and engineering policies.
-              </p>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
-                <span className="tech-tag">SOP Frameworks</span>
-                <span className="tech-tag">Policy Mapping</span>
-              </div>
-            </div>
-
-            {/* PRODUCT CARD 4: SAAS AUDITOR */}
-            <div className="portfolio-card">
-              <span style={{ color: '#aa00ff', fontSize: '0.75rem', fontWeight: 'bold' }}>AUDITING MODULE</span>
-              <h3 style={styles.cardTitle}>SaaS Tracker & Tech Stack Auditor</h3>
-              <p style={styles.cardDescription}>
-                A comprehensive software asset accounting system tracking technical redundancy overhead, active API licensing matrices, and budget optimizations.
-              </p>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
-                <span className="tech-tag">Systems Auditing</span>
-                <span className="tech-tag">Resource Allocation</span>
-              </div>
-            </div>
+            ))}
           </div>
+
+          {/* NEW: DETAILED INTERACTIVE MODAL COMPONENT */}
+          {selectedAsset && (
+            <div style={styles.modalOverlay} onClick={() => setSelectedAsset(null)}>
+              <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                <div style={styles.modalHeader}>
+                  <div>
+                    <span style={{ color: selectedAsset.badgeColor, fontSize: '0.75rem', fontWeight: 'bold' }}>{selectedAsset.category}</span>
+                    <h2 style={{ color: '#fff', margin: '4px 0 0 0', fontSize: '1.4rem' }}>{selectedAsset.title}</h2>
+                  </div>
+                  <button style={styles.closeModalBtn} onClick={() => setSelectedAsset(null)}>✕</button>
+                </div>
+
+                <div style={styles.modalBodyLayout}>
+                  {/* LEFT COLUMN: CRISP TERMINAL IMAGE PLACEHOLDER FOR NOTION PREVIEWS */}
+                  <div style={styles.modalImageContainer}>
+                    <div style={{ color: selectedAsset.badgeColor, fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '8px' }}>
+                      {selectedAsset.previewPlaceholderText}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#555577', textAlign: 'center', maxWidth: '80%' }}>
+                      (In production, swap this terminal wireframe component with a direct production screenshot of your Notion dashboard interface)
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN: HIGH-VALUE FUNCTIONAL SPECIFICATION MATRIX */}
+                  <div style={styles.modalSpecsContainer}>
+                    <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '0.9rem', letterSpacing: '1px' }}>SYSTEM OPERATIONAL SCOPE</h4>
+                    <ul style={{ paddingLeft: '16px', margin: '0 0 20px 0', color: '#9999bb', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                      {selectedAsset.fullScope.map((scopeItem, idx) => (
+                        <li key={idx} style={{ marginBottom: '8px' }}>{scopeItem}</li>
+                      ))}
+                    </ul>
+
+                    <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '0.9rem', letterSpacing: '1px' }}>CORE DESIGN MODULES</h4>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
+                      {selectedAsset.features.map((feat, idx) => (
+                        <span key={idx} className="tech-tag" style={{ borderColor: selectedAsset.badgeColor, color: '#fff' }}>{feat}</span>
+                      ))}
+                    </div>
+
+                    <a href={selectedAsset.storeUrl} target="_blank" rel="noreferrer" className="action-link-btn" style={{ backgroundColor: selectedAsset.badgeColor, color: '#000', width: '100%', boxSizing: 'border-box' }}>
+                      ACQUIRE ASSET SECURE LINK ↗
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <footer style={styles.portfolioFooter}>
             <div>© 2026 The Digital Sabio. Built with premium custom code infrastructure on macOS systems.</div>
@@ -345,8 +436,8 @@ export const App: React.FC = () => {
         <>
           <div style={styles.simulatorActionHUD}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              // AFTER
-              <button style={{ ...styles.linkButton, backgroundColor: linkModeSourceId ? '#00ffcc' : '#161622', color: linkModeSourceId ? '#000' : '#00ffcc' }} onClick={() => setLinkModeSourceId('PENDING')}>                {linkModeSourceId ? "SELECT TARGET NODE VECTOR..." : "⚡ LINK HARDWARE MATRIX"}
+              <button style={{ ...styles.linkButton, backgroundColor: linkModeSourceId ? '#00ffcc' : '#161622', color: linkModeSourceId ? '#000' : '#00ffcc' }} onClick={() => setLinkModeSourceId('PENDING')}>
+                {linkModeSourceId ? "SELECT TARGET NODE VECTOR..." : "⚡ LINK HARDWARE MATRIX"}
               </button>
               <label style={styles.fileUploadLabel}>
                 📥 IMPORT TOPOLOGY
@@ -479,7 +570,7 @@ export const App: React.FC = () => {
                       </div>
                       {focusedNode.type === 'FIREWALL' && (
                         <div style={{ marginTop: '16px', background: '#171722', padding: '12px', border: '1px dashed #ffff0033', borderRadius: '4px' }}>
-                          <span style={{ fontSize: '0.7rem', color: '#ffff00', d: 'block' }}>SECURITY RULE INTERCEPT</span>
+                          <span style={{ fontSize: '0.7rem', color: '#ffff00', display: 'block' }}>SECURITY RULE INTERCEPT</span>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', marginTop: '8px', color: '#aaa', cursor: 'pointer' }}>
                             <input type="checkbox" checked={firewallBypassActive} onChange={(e) => setFirewallBypassActive(e.target.checked)} />
                             BYPASS SECURITY FILTERING
@@ -510,15 +601,22 @@ export const App: React.FC = () => {
 
 const styles: Record<string, React.CSSProperties> = {
   dashboardContainer: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0a0a0c', color: '#00ffcc', fontFamily: 'monospace', overflow: 'hidden' },
-  globalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111116', borderBottom: '1px solid #1c1c28', padding: '0 24px', height: '54px' },
+  globalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111116', borderBottom: '1px solid #1c1c28', padding: '0 24px', height: '54px', zIndex: 10 },
   logoGroup: { fontSize: '0.95rem', fontWeight: 'bold', letterSpacing: '1px', color: '#fff' },
   portfolioScrollArea: { flex: 1, overflowY: 'auto', padding: '40px 60px', backgroundColor: '#060609', maxWidth: '1200px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
   heroSection: { marginTop: '20px' },
-  heroTitle: { fontSize: '2.2rem', color: '#ffffff', margin: '8px 0', fontWeight: '8xl', letterSpacing: '-0.5px' },
+  heroTitle: { fontSize: '2.2rem', color: '#ffffff', margin: '8px 0', fontWeight: 'bold', letterSpacing: '-0.5px' },
   heroSubtitle: { color: '#8888aa', fontSize: '1.05rem', lineHeight: '1.6', maxWidth: '800px', margin: '0' },
   portfolioGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', marginTop: '24px' },
   cardTitle: { color: '#ffffff', fontSize: '1.15rem', margin: '6px 0 10px 0' },
   cardDescription: { color: '#888899', fontSize: '0.85rem', lineHeight: '1.5', margin: '0' },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(5, 5, 8, 0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, padding: '20px', boxSizing: 'border-box' },
+  modalContent: { backgroundColor: '#0d0d14', border: '1px solid #222235', borderRadius: '8px', maxWidth: '840px', width: '100%', padding: '30px', boxSizing: 'border-box', boxShadow: '0 20px 50px rgba(0,0,0,0.8)' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #1c1c28', paddingBottom: '16px', marginBottom: '20px' },
+  closeModalBtn: { background: 'transparent', border: 'none', color: '#666', fontSize: '1.2rem', cursor: 'pointer' },
+  modalBodyLayout: { display: 'flex', gap: '30px', flexWrap: 'wrap' },
+  modalImageContainer: { flex: 1.2, minWidth: '280px', height: '240px', backgroundColor: '#111118', border: '1px dashed #222235', borderRadius: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px', boxSizing: 'border-box' },
+  modalSpecsContainer: { flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
   portfolioFooter: { marginTop: '80px', borderTop: '1px solid #1a1a26', paddingTop: '20px', fontSize: '0.75rem', color: '#444455', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' },
   simulatorActionHUD: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 24px', backgroundColor: '#13131a', borderBottom: '2px solid #1c1c28' },
   linkButton: { border: '1px solid #00ffcc', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', background: 'transparent', color: '#00ffcc', fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 'bold' },
