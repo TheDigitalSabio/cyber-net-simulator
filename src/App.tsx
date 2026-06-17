@@ -73,8 +73,8 @@ export const App: React.FC = () => {
         'Maps custom generative AI pipelines to existing technical department workflows.'
       ],
       features: ['Prompt Matrix Repository', 'Model Parameter Logs', 'Pipeline Deployment Mapping', 'Token & Cost Tracking Logs'],
-      imageSrc: '/ai-hub.jpg', // 👈 Points directly to public/ai-hub.jpg
-      storeUrl: 'https://cyber-net-simulator.vercel.app' 
+      imageSrc: 'ai-hub.jpg', // 👈 Points directly to public/ai-hub.jpg
+      storeUrl: 'https://payhip.com/b/ne0az' 
     },
     {
       id: 'sop-library',
@@ -88,8 +88,8 @@ export const App: React.FC = () => {
         'Minimizes organizational friction during software development and infrastructure scaling phases.'
       ],
       features: ['Interactive Step Verification', 'Role-Based Access Mapping', 'Audit Lifecycle Tracking', 'System Dependency Linking'],
-      imageSrc: '/sop-library.jpg', // 👈 Points directly to public/sop-library.jpg
-      storeUrl: 'https://cyber-net-simulator.vercel.app' 
+      imageSrc: 'sop-library.jpg', // 👈 Points directly to public/sop-library.jpg
+      storeUrl: 'https://payhip.com/b/ne0az' 
     },
     {
       id: 'saas-tracker',
@@ -103,8 +103,8 @@ export const App: React.FC = () => {
         'Optimizes operational budgets by automatically mapping underutilized software licenses.'
       ],
       features: ['Licensing & Renewal Alarms', 'Functional Redundancy Auditing', 'API Endpoint Matrix Map', 'Cost Optimization Dashboard'],
-      imageSrc: '/saas-tracker.jpg', // 👈 Points directly to public/saas-tracker.jpg
-      storeUrl: 'https://cyber-net-simulator.vercel.app' 
+      imageSrc: 'saas-tracker.jpg', // 👈 Points directly to public/saas-tracker.jpg
+      storeUrl: 'https://payhip.com/b/ne0az' 
     }
   ];
 
