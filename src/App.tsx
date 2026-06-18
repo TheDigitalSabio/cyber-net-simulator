@@ -29,7 +29,7 @@ interface DigitalAsset {
   shortDesc: string;
   fullScope: string[];
   features: string[];
-  imageSrc: string; // 👈 Make sure this says 'imageSrc: string;' and NOT 'previewPlaceholderText'
+  imageSrc: string; 
   storeUrl: string;
 }
 
@@ -59,7 +59,7 @@ export const App: React.FC = () => {
   const draggingNodeId = useRef<string | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
 
- // --- STATIC ASSET DATA MAP ---
+  // --- STATIC ASSET DATA MAP ---
   const digitalAssets: DigitalAsset[] = [
     {
       id: 'ai-hub',
@@ -73,7 +73,7 @@ export const App: React.FC = () => {
         'Maps custom generative AI pipelines to existing technical department workflows.'
       ],
       features: ['Prompt Matrix Repository', 'Model Parameter Logs', 'Pipeline Deployment Mapping', 'Token & Cost Tracking Logs'],
-      imageSrc: 'ai-hub.jpg', // 👈 Points directly to public/ai-hub.jpg
+      imageSrc: 'ai-hub.jpg', 
       storeUrl: 'https://payhip.com/b/ne0az' 
     },
     {
@@ -88,7 +88,7 @@ export const App: React.FC = () => {
         'Minimizes organizational friction during software development and infrastructure scaling phases.'
       ],
       features: ['Interactive Step Verification', 'Role-Based Access Mapping', 'Audit Lifecycle Tracking', 'System Dependency Linking'],
-      imageSrc: 'sop-library.jpg', // 👈 Points directly to public/sop-library.jpg
+      imageSrc: 'sop-library.jpg', 
       storeUrl: 'https://payhip.com/b/ne0az' 
     },
     {
@@ -103,7 +103,7 @@ export const App: React.FC = () => {
         'Optimizes operational budgets by automatically mapping underutilized software licenses.'
       ],
       features: ['Licensing & Renewal Alarms', 'Functional Redundancy Auditing', 'API Endpoint Matrix Map', 'Cost Optimization Dashboard'],
-      imageSrc: 'saas-tracker.jpg', // 👈 Points directly to public/saas-tracker.jpg
+      imageSrc: 'saas-tracker.jpg', 
       storeUrl: 'https://payhip.com/b/ne0az' 
     }
   ];
@@ -297,7 +297,30 @@ export const App: React.FC = () => {
       {/* GLOBAL SYSTEM BAR & VIEW TOGGLE CONTROLLER */}
       <header style={styles.globalHeader}>
         <div style={styles.logoGroup}>
-          <span style={{ color: '#ff0055', fontWeight: 'bold' }}>▲</span> THE DIGITAL SABIO <span style={{ color: '#444' }}>//</span> ASSET MATRIX
+          {/* HIGH-END INTEGRATED GRAPHIC EMBEDDING CIRCUIT */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            backgroundColor: '#111116',
+            border: '1px solid #ff0055',
+            boxShadow: '0 0 8px rgba(255, 0, 85, 0.35)',
+            overflow: 'hidden',
+            padding: '3px',
+            boxSizing: 'border-box'
+          }}>
+            <img 
+              src="/logo.png" 
+              alt="The Digital Sabio"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          </div>
+          <span style={{ marginLeft: '12px', letterSpacing: '1.5px' }}>
+            THE DIGITAL SABIO <span style={{ color: '#33334c' }}>//</span> ASSET MATRIX
+          </span>
         </div>
         <div style={{ display: 'flex', gap: '4px' }}>
           <button className={`tab-btn ${viewMode === 'PORTFOLIO' ? 'active' : ''}`} onClick={() => setViewMode('PORTFOLIO')}>
@@ -386,21 +409,20 @@ export const App: React.FC = () => {
                 </div>
 
                 <div style={styles.modalBodyLayout}>
-                  {/* AFTER */}
-                {/* LEFT COLUMN: CRISP IMAGE PREVIEW FOR NOTION INTERFACES */}
-                <div style={styles.modalImageContainer}>
-                  <img 
-                    src={selectedAsset.imageSrc} 
-                    alt={selectedAsset.title} 
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover', 
-                      borderRadius: '4px',
-                      border: '1px solid #222235'
-                    }} 
-                  />
-                </div>
+                  {/* LEFT COLUMN: CRISP IMAGE PREVIEW FOR NOTION INTERFACES */}
+                  <div style={styles.modalImageContainer}>
+                    <img 
+                      src={selectedAsset.imageSrc} 
+                      alt={selectedAsset.title} 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover', 
+                        borderRadius: '4px',
+                        border: '1px solid #222235'
+                      }} 
+                    />
+                  </div>
                   {/* RIGHT COLUMN: HIGH-VALUE FUNCTIONAL SPECIFICATION MATRIX */}
                   <div style={styles.modalSpecsContainer}>
                     <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '0.9rem', letterSpacing: '1px' }}>SYSTEM OPERATIONAL SCOPE</h4>
@@ -427,7 +449,7 @@ export const App: React.FC = () => {
           )}
 
           <footer style={styles.portfolioFooter}>
-            <div>© 2026 The Digital Sabio. Built with premium custom code infrastructure on macOS systems.</div>
+            <div>© 2026 The Digital Sabio. Built with premium custom code infrastructure.</div>
             <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
               <span style={{ color: '#444455' }}>GitHub: Linked Profile</span>
               <span style={{ color: '#444455' }}>Deployments: Connected Production Pipeline Vercel V1</span>
@@ -547,96 +569,107 @@ export const App: React.FC = () => {
                     <div style={{ fontSize: '0.7rem', fontWeight: 'bold', color: nodeColor }}>{node.label}</div>
                     <div style={{ fontSize: '0.6rem', color: '#444455' }}>{node.ipAddress}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '88%', borderTop: '1px solid #222230', marginTop: '6px', paddingTop: '4px', fontSize: '0.55rem', color: '#666677' }}>
-                      <div>TX: {node.txCount}</div><div>RX: {node.rxCount}</div>
+                      <div>TX: {node.txCount}</div>
+                      <div>RX: {node.rxCount}</div>
                     </div>
                   </div>
                 );
               })}
             </main>
 
-            {/* EXPANDED SYSTEM DRAWERS */}
-            {selectedNodeId && (
-              <aside style={styles.sidebarRight}>
-                {nodes.find(n => n.id === selectedNodeId) && (() => {
-                  const focusedNode = nodes.find(n => n.id === selectedNodeId)!;
+            {/* CONTROL DRAWER SIDEBAR FOR SELECTED HARDWARE NODES */}
+            <aside style={styles.sidebarRight}>
+              <h3 style={styles.panelTitle}>METRIC_DIAGNOSTICS</h3>
+              <p style={styles.subtitle}>Selected asset variables</p>
+              {selectedNodeId ? (
+                (() => {
+                  const node = nodes.find(n => n.id === selectedNodeId);
+                  if (!node) return <p style={{ color: '#444466', fontSize: '0.8rem' }}>No system selection node targeted.</p>;
                   return (
-                    <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={styles.panelTitle}>CONFIGURATION // HUD</h3>
-                        <button style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }} onClick={() => setSelectedNodeId(null)}>✕</button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.65rem', color: '#666680' }}>NODE IDENTIFIER LABEL</label>
+                        <input type="text" className="drawer-input" value={node.label} onChange={(e) => {
+                          const nextVal = e.target.value;
+                          setNodes(prev => prev.map(n => n.id === selectedNodeId ? { ...n, label: nextVal } : n));
+                        }} />
                       </div>
-                      <div style={{ marginTop: '12px' }}>
-                        <label style={{ fontSize: '0.65rem', color: '#666' }}>NODE LABELLING</label>
-                        <input type="text" className="drawer-input" value={focusedNode.label} onChange={(e) => setNodes(prev => prev.map(n => n.id === focusedNode.id ? { ...n, label: e.target.value } : n))} />
+                      <div>
+                        <label style={{ fontSize: '0.65rem', color: '#666680' }}>IPV4 IP_ADDRESS LOCATION</label>
+                        <input type="text" className="drawer-input" value={node.ipAddress} onChange={(e) => {
+                          const nextVal = e.target.value;
+                          setNodes(prev => prev.map(n => n.id === selectedNodeId ? { ...n, ipAddress: nextVal } : n));
+                        }} />
                       </div>
-                      <div style={{ marginTop: '12px' }}>
-                        <label style={{ fontSize: '0.65rem', color: '#666' }}>IP IP_ADDRESS_SUITE</label>
-                        <input type="text" className="drawer-input" value={focusedNode.ipAddress} onChange={(e) => setNodes(prev => prev.map(n => n.id === focusedNode.id ? { ...n, ipAddress: e.target.value } : n))} />
-                      </div>
-                      {focusedNode.type === 'FIREWALL' && (
-                        <div style={{ marginTop: '16px', background: '#171722', padding: '12px', border: '1px dashed #ffff0033', borderRadius: '4px' }}>
-                          <span style={{ fontSize: '0.7rem', color: '#ffff00', display: 'block' }}>SECURITY RULE INTERCEPT</span>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', marginTop: '8px', color: '#aaa', cursor: 'pointer' }}>
+                      {node.type === 'FIREWALL' && (
+                        <div style={{ marginTop: '8px', border: '1px dashed #ffff00', padding: '10px', borderRadius: '4px', backgroundColor: '#1c1c12' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: '#ffff00', cursor: 'pointer' }}>
                             <input type="checkbox" checked={firewallBypassActive} onChange={(e) => setFirewallBypassActive(e.target.checked)} />
-                            BYPASS SECURITY FILTERING
+                            BYPASS PACKET INSPECTION
                           </label>
                         </div>
                       )}
-                      <button style={{ ...styles.nodeButton, borderColor: '#ff0055', color: '#ff0055', marginTop: '20px', fontSize: '0.7rem', textAlign: 'center' }} onClick={() => setNodes(prev => prev.map(n => n.id === focusedNode.id ? { ...n, txCount: 0, rxCount: 0 } : n))}>
-                        RESET HARDWARE STATS
-                      </button>
-                    </>
+                      <button style={{ ...styles.nodeButton, borderColor: '#ff0055', color: '#ff0055', marginTop: '12px' }} onClick={() => {
+                        setNodes(nodes.filter(n => n.id !== selectedNodeId));
+                        setCables(cables.filter(c => c.fromId !== selectedNodeId && c.toId !== selectedNodeId));
+                        setSelectedNodeId(null);
+                      }}>DE-ALLOCATE HARDWARE CORE</button>
+                    </div>
                   );
-                })()}
-              </aside>
-            )}
-          </div>
+                })()
+              ) : (
+                <p style={{ color: '#444466', fontSize: '0.8rem' }}>Target a node layout component to inspect telemetry array maps.</p>
+              )}
 
-          <footer style={styles.terminalContainer}>
-            <div style={styles.terminalHeader}>SYSTEM_LOG_STREAM // FEED.LOG</div>
-            <div style={styles.terminalBody}>
-              {terminalLogs.map((log, index) => <div key={index} style={{ fontSize: '0.85rem', color: '#00ffcc' }}>{log}</div>)}
-            </div>
-          </footer>
+              <hr style={{ border: 'none', borderTop: '1px solid #222235', margin: '20px 0' }} />
+              <h3 style={styles.panelTitle}>TERMINAL_LOGSTREAM</h3>
+              <div style={styles.terminalBox}>
+                {terminalLogs.map((log, idx) => (
+                  <div key={idx} style={{ marginBottom: '6px', color: log.includes('❌') || log.includes('🔥') ? '#ff0055' : log.includes('🏁') || log.includes('🛸') ? '#00ffcc' : '#aaaabf' }}>
+                    {log}
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
         </>
       )}
     </div>
   );
 };
 
-const styles: Record<string, React.CSSProperties> = {
-  dashboardContainer: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0a0a0c', color: '#00ffcc', fontFamily: 'monospace', overflow: 'hidden' },
-  globalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#111116', borderBottom: '1px solid #1c1c28', padding: '0 24px', height: '54px', zIndex: 10 },
-  logoGroup: { fontSize: '0.95rem', fontWeight: 'bold', letterSpacing: '1px', color: '#fff' },
-  portfolioScrollArea: { flex: 1, overflowY: 'auto', padding: '40px 60px', backgroundColor: '#060609', maxWidth: '1200px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
-  heroSection: { marginTop: '20px' },
-  heroTitle: { fontSize: '2.2rem', color: '#ffffff', margin: '8px 0', fontWeight: 'bold', letterSpacing: '-0.5px' },
-  heroSubtitle: { color: '#8888aa', fontSize: '1.05rem', lineHeight: '1.6', maxWidth: '800px', margin: '0' },
-  portfolioGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', marginTop: '24px' },
-  cardTitle: { color: '#ffffff', fontSize: '1.15rem', margin: '6px 0 10px 0' },
-  cardDescription: { color: '#888899', fontSize: '0.85rem', lineHeight: '1.5', margin: '0' },
-  modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(5, 5, 8, 0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, padding: '20px', boxSizing: 'border-box' },
-  modalContent: { backgroundColor: '#0d0d14', border: '1px solid #222235', borderRadius: '8px', maxWidth: '840px', width: '100%', padding: '30px', boxSizing: 'border-box', boxShadow: '0 20px 50px rgba(0,0,0,0.8)' },
-  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #1c1c28', paddingBottom: '16px', marginBottom: '20px' },
-  closeModalBtn: { background: 'transparent', border: 'none', color: '#666', fontSize: '1.2rem', cursor: 'pointer' },
-  modalBodyLayout: { display: 'flex', gap: '30px', flexWrap: 'wrap' },
-  modalImageContainer: { flex: 1.2, minWidth: '280px', height: '240px', backgroundColor: '#111118', border: '1px dashed #222235', borderRadius: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px', boxSizing: 'border-box' },
-  modalSpecsContainer: { flex: 1, minWidth: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
-  portfolioFooter: { marginTop: '80px', borderTop: '1px solid #1a1a26', paddingTop: '20px', fontSize: '0.75rem', color: '#444455', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' },
-  simulatorActionHUD: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 24px', backgroundColor: '#13131a', borderBottom: '2px solid #1c1c28' },
-  linkButton: { border: '1px solid #00ffcc', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', background: 'transparent', color: '#00ffcc', fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 'bold' },
-  fileUploadLabel: { border: '1px solid #ffff00', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', color: '#ffff00', fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-block' },
-  runButton: { backgroundColor: '#ff0055', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontFamily: 'monospace', fontSize: '0.75rem' },
+// --- OBJECT ORIENTED COMPONENT CSS MATRIX DEFINITIONS ---
+const styles: { [key: string]: React.CSSProperties } = {
+  dashboardContainer: { width: '100vw', height: '100vh', backgroundColor: '#09090d', color: '#fff', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  globalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0d0d13', borderBottom: '1px solid #1a1a26', padding: '0 24px', height: '56px', minHeight: '56px', boxSizing: 'border-box' },
+  logoGroup: { display: 'flex', alignItems: 'center', fontSize: '0.9rem', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' },
+  portfolioScrollArea: { flex: 1, overflowY: 'auto', padding: '40px 10% 20px 10%', boxSizing: 'border-box' },
+  heroSection: { maxWidth: '800px', margin: '0 auto', textAlign: 'left' },
+  heroTitle: { fontSize: '2.2rem', fontWeight: 'bold', margin: '0 0 16px 0', color: '#fff', letterSpacing: '-0.5px', lineHeight: '1.2' },
+  heroSubtitle: { fontSize: '1rem', color: '#8888aa', lineHeight: '1.6', margin: '0' },
+  portfolioGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' },
+  cardTitle: { fontSize: '1.1rem', fontWeight: 'bold', color: '#fff', margin: '6px 0 8px 0' },
+  cardDescription: { fontSize: '0.85rem', color: '#777799', lineHeight: '1.5', margin: '0' },
+  portfolioFooter: { maxWidth: '1200px', margin: '40px auto 0 auto', borderTop: '1px solid #1a1a26', paddingTop: '20px', fontSize: '0.75rem', color: '#33334c', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' },
+  simulatorActionHUD: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 24px', backgroundColor: '#0d0d13', borderBottom: '1px solid #1a1a26', height: '56px', minHeight: '56px', boxSizing: 'border-box' },
+  linkButton: { background: '#161622', border: '1px solid #33334c', color: '#aaaabf', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', borderRadius: '4px', fontFamily: 'monospace' },
+  fileUploadLabel: { background: '#161622', border: '1px solid #33334c', color: '#aaaabf', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', borderRadius: '4px', fontFamily: 'monospace', display: 'inline-block' },
+  runButton: { background: 'transparent', border: '1px solid #00ffcc', color: '#00ffcc', padding: '6px 16px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', borderRadius: '4px', fontFamily: 'monospace' },
   workspace: { display: 'flex', flex: 1, overflow: 'hidden' },
-  sidebarLeft: { width: '240px', backgroundColor: '#111116', borderRight: '1px solid #1c1c28', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' },
-  sidebarRight: { width: '260px', backgroundColor: '#111116', borderLeft: '1px solid #1c1c28', padding: '20px', display: 'flex', flexDirection: 'column' },
-  panelTitle: { color: '#ff0055', margin: 0, fontSize: '0.9rem', letterSpacing: '1px' },
-  subtitle: { color: '#555', fontSize: '0.75rem', margin: '0 0 4px 0' },
-  nodeButton: { backgroundColor: '#15151f', color: '#00ffcc', border: '1px solid #00ffcc33', padding: '10px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.8rem' },
-  canvasArea: { flex: 1, backgroundColor: '#060608', position: 'relative', backgroundImage: 'radial-gradient(#1c1c28 1.5px, transparent 1.5px)', backgroundSize: '20px 20px', overflow: 'hidden' },
-  svgLayer: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 },
-  nodeSprite: { position: 'absolute', width: '104px', height: '104px', border: '1px solid', borderRadius: '4px', backgroundColor: '#0d0d14', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 5, cursor: 'grab', padding: '4px 0' },
-  terminalContainer: { height: '140px', backgroundColor: '#07070a', borderTop: '1px solid #1c1c28', display: 'flex', flexDirection: 'column' },
-  terminalHeader: { backgroundColor: '#111116', padding: '4px 16px', fontSize: '0.7rem', color: '#555' },
-  terminalBody: { flex: 1, padding: '10px 16px', overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse', gap: '2px' }
+  sidebarLeft: { width: '220px', minWidth: '220px', backgroundColor: '#0d0d13', borderRight: '1px solid #1a1a26', padding: '16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '8px' },
+  sidebarRight: { width: '300px', minWidth: '300px', backgroundColor: '#0d0d13', borderLeft: '1px solid #1a1a26', padding: '16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' },
+  panelTitle: { fontSize: '0.8rem', fontWeight: 'bold', color: '#00ffcc', margin: '0 0 2px 0', letterSpacing: '1px' },
+  subtitle: { fontSize: '0.65rem', color: '#444455', margin: '0 0 12px 0' },
+  nodeButton: { background: '#111116', border: '1px solid #222235', color: '#fff', padding: '10px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', width: '100%', boxSizing: 'border-box' },
+  canvasArea: { flex: 1, position: 'relative', overflow: 'hidden', cursor: 'crosshair', backgroundImage: 'radial-gradient(#11111a 1px, transparent 1px)', backgroundSize: '20px 20px' },
+  svgLayer: { position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, pointerEvents: 'none' },
+  nodeSprite: { position: 'absolute', width: '104px', height: '104px', border: '1px solid', borderRadius: '6px', background: '#09090d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'grab', userSelect: 'none', boxSizing: 'border-box' },
+  terminalBox: { flex: 1, background: '#050508', border: '1px solid #1a1a26', borderRadius: '4px', padding: '12px', overflowY: 'auto', fontSize: '0.65rem', lineHeight: '1.4', marginTop: '8px' },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  modalContent: { width: '840px', maxWidth: '90%', backgroundColor: '#0d0d13', border: '1px solid #222235', borderRadius: '8px', padding: '32px', boxSizing: 'border-box', boxShadow: '0 20px 50px rgba(0,0,0,0.8)' },
+  modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', borderBottom: '1px solid #1a1a26', paddingBottom: '16px' },
+  closeModalBtn: { background: 'transparent', border: 'none', color: '#444466', fontSize: '1.2rem', cursor: 'pointer' },
+  modalBodyLayout: { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px', alignItems: 'start' },
+  modalImageContainer: { height: '240px', backgroundColor: '#09090d', borderRadius: '6px', border: '1px dashed #222235', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px', boxSizing: 'border-box', overflow: 'hidden' },
+  modalSpecsContainer: { display: 'flex', flexDirection: 'column' }
 };
