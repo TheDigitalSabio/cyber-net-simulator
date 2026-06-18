@@ -7,6 +7,7 @@
   border: 2px solid transparent;
   transition: border-color 0.3s;
   margin-bottom: 24px;
+  display: inline-flex; /* Keeps it neatly bound */
 
   &:hover {
     border-color: var(--accent-border);
@@ -17,8 +18,15 @@
   }
 }
 
+/* --- OPTIMIZED HERO ANIMATION GRAPHIC --- */
 .hero {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 320px; /* Safeguards small viewports */
+  margin: 0 auto;
 
   .base,
   .framework,
@@ -42,8 +50,7 @@
     z-index: 1;
     top: 34px;
     height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg) scale(1.4);
   }
 
   .vite {
@@ -51,8 +58,13 @@
     top: 107px;
     height: 26px;
     width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg) scale(0.8);
+  }
+
+  /* Responsive 3D Safe-bounds */
+  @media (max-width: 768px) {
+    transform: scale(0.85); /* Smoothly shrinks the entire 3D stack altogether rather than breaking layer positions */
+    margin-bottom: 16px;
   }
 }
 
@@ -63,8 +75,9 @@
   place-content: center;
   place-items: center;
   flex-grow: 1;
+  padding: 0 24px;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     padding: 32px 20px 24px;
     gap: 18px;
   }
@@ -78,7 +91,7 @@
   & > div {
     flex: 1 1 0;
     padding: 32px;
-    @media (max-width: 1024px) {
+    @media (max-width: 768px) {
       padding: 24px 20px;
     }
   }
@@ -89,7 +102,7 @@
     height: 22px;
   }
 
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     flex-direction: column;
     text-align: center;
   }
@@ -98,7 +111,7 @@
 #docs {
   border-right: 1px solid var(--border);
 
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
@@ -136,13 +149,14 @@
     }
   }
 
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     margin-top: 20px;
     flex-wrap: wrap;
     justify-content: center;
 
     li {
       flex: 1 1 calc(50% - 8px);
+      min-width: 130px; /* Prevents text fragmentation on ultra narrow devices */
     }
 
     a {
@@ -156,7 +170,7 @@
 #spacer {
   height: 88px;
   border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     height: 48px;
   }
 }
